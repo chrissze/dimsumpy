@@ -1,5 +1,5 @@
-from typing import List
-
+from typing import Any, Dict, List
+from psycopg2.extensions import connection, cursor
 
 def upsertquery(tablename: str, cols: List[str], keys: List[str]) -> str:
     cols_str = ', '.join(cols)
@@ -14,4 +14,16 @@ def upsertquery(tablename: str, cols: List[str], keys: List[str]) -> str:
                         , ') = (', update_str, ')'])
     return query_str
 
-##
+
+def upsert_dict(table: str, dict: Dict, primarykeys: List[str], con: connection) -> str:
+    """ I should place symbol as first element of keys, so that it can be returned"""
+    c: cursor = con.cursor()
+    query: str = upsertquery(table, dict.keys(), primarykeys)
+    values = tuple(dict.values())
+    c.execute(query, values)
+    c.close()
+    con.commit()
+    pkvalue: Any = dict.get(primarykeys[0])
+    return str(pkvalue)
+
+
