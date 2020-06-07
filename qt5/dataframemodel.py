@@ -30,7 +30,7 @@ class DataFrameModel(QAbstractTableModel):
         if not index.isValid():
             return None
 
-        return str(self.df.ix[index.row(), index.column()])
+        return str(self.df.iloc[index.row(), index.column()])
 
     def setData(self, index, value, role=Qt.DisplayRole):
         row = self.df.index[index.row()]
