@@ -27,3 +27,15 @@ def upsert_dict(table: str, dict: Dict, primarykeys: List[str], con: connection)
     return str(pkvalue)
 
 
+
+def postgres_read(command: str, con) -> DataFrame:
+    try:
+        df: DataFrame = pd.read_sql(sql=command, con=con)
+        print('postgres command executed: ')
+        print(command)
+        print(df)
+        return df
+    except Exception as err:
+        print(err)
+        return pd.DataFrame() # empty dataframe
+
