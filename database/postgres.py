@@ -1,4 +1,6 @@
 from typing import Any, Dict, List
+
+from pandas import DataFrame
 from psycopg2.extensions import connection, cursor
 
 def upsertquery(tablename: str, cols: List[str], keys: List[str]) -> str:
