@@ -6,5 +6,5 @@ def confirmation_box(func):
         reply: QMessageBox.StandardButton = QMessageBox.question(
             args[0], 'Confirmation', 'Action?', QMessageBox.Yes | QMessageBox.Cancel)
         if reply == QMessageBox.Yes:
-            func()
-    return wrapper
+            func(*args)
+    return wrapper(*args)
