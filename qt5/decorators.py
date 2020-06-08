@@ -7,4 +7,4 @@ def confirmation_box(func):
             args[0], 'Confirmation', 'Action?', QMessageBox.Yes | QMessageBox.Cancel)
         if reply == QMessageBox.Yes:
             func(*args)
-    return wrapper(*args)
+    return wrapper
