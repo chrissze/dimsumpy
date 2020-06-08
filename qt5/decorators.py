@@ -1,10 +1,13 @@
 from PySide2.QtWidgets import QMessageBox
+from functools import wraps
 
-
-def confirmation_box(func):
-    def wrapper(*args):
+def confirmation_self(method):
+    @wraps(method)
+    def _impl(self, *method_args, **method_kwargs):
         reply: QMessageBox.StandardButton = QMessageBox.question(
-            args[0], 'Confirmation', 'Action?', QMessageBox.Yes | QMessageBox.Cancel)
+            self, 'Confirmation', 'Action?', QMessageBox.Yes | QMessageBox.Cancel)
         if reply == QMessageBox.Yes:
-            func(*args)
-    return wrapper
+            method_output = method(self, *method_args, **method_kwargs)
+            return method_output
+    return _impl
+    
