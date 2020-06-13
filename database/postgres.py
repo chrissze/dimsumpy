@@ -30,14 +30,14 @@ def upsert_dict(table: str, dict: Dict, primarykeys: List[str], con: connection)
 
 
 
-def postgres_read(command: str, con) -> DataFrame:
+
+def db_exec(command: str, con: connection ) -> str:
     try:
-        df: DataFrame = pd.read_sql(sql=command, con=con)
-        print('postgres command executed: ')
-        print(command)
-        print(df)
-        return df
+        c: cursor = con.cursor()
+        c.execute(command)
+        c.close()
+        result = con.commit()
+        return str(result)
     except Exception as err:
-        print(err)
-        return pd.DataFrame() # empty dataframe
+        return str(err)
 
