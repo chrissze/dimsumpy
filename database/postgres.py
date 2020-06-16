@@ -19,15 +19,20 @@ def upsertquery(tablename: str, cols: List[str], keys: List[str]) -> str:
 
 def upsert_dict(table: str, dict: Dict, primarykeys: List[str], con: connection) -> str:
     """ I should place symbol as first element of keys, so that it can be returned"""
-    c: cursor = con.cursor()
-    query: str = upsertquery(table, dict.keys(), primarykeys)
-    values = tuple(dict.values())
-    c.execute(query, values)
-    c.close()
-    con.commit()
-    pkvalue: Any = dict.get(primarykeys[0])
-    return str(pkvalue)
-
+    try:
+        c: cursor = con.cursor()
+        query: str = upsertquery(table, dict.keys(), primarykeys)
+        values = tuple(dict.values())
+        c.execute(query, values)
+        c.close()
+        con.commit()
+        pkvalue: Any = dict.get(primarykeys[0])
+        return str(pkvalue) # should be the symbol
+    except Exception as err:
+        return str(err)
+    finally:
+        if con:
+            con.close()
 
 
 
