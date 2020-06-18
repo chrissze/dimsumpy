@@ -2,20 +2,33 @@ from typing import List
 from statistics import mean
 
 
-def deltas(list_x: List[float]) -> List[float]:
-    if len(list_x) < 2:
+def deltas(n: int, list_x: List[float]) -> List[float]:
+    if len(list_x) < n + 1:
         return []
     else:
         xs = list_x
         result = []
-        while len(xs) > 1:
-            diff = xs[0] - xs[1]
+        while len(xs) > n:
+            diff = xs[0] - xs[n]
             result.append(diff)
             xs = xs[1:]
         return result
 
 
-def ema(list_x: List[float], n: int) -> float:
+def changes(n: int, list_x: List[float]) -> List[float]:
+    if len(list_x) < n + 1:
+        return []
+    else:
+        xs = list_x
+        result = []
+        while len(xs) > n:
+            chg = (xs[0] - xs[n]) / xs[n]
+            result.append(chg)
+            xs = xs[1:]
+        return result
+
+
+def ema(n: int, list_x: List[float]) -> float:
     """
     test: listx = [22.17, 22.4, 23.1, 22.68, 23.33, 23.1, 23.19, 23.65, 23.87, 23.82
                   , 23.63, 23.95, 23.83, 23.75, 24.05, 23.36, 22.61, 22.38, 22.39, 22.15
@@ -29,7 +42,7 @@ def ema(list_x: List[float], n: int) -> float:
     else:
         def f(em_, x_): return (x_ - em_) * weight + em_
         weight = 2.0 / (n + 1)
-        first_ma = sma(list_m[-n:], n)
+        first_ma = sma(n, list_m[-n:])
         em = first_ma
         xs = list_m[:-n]   # safe
         while xs:
@@ -39,18 +52,18 @@ def ema(list_x: List[float], n: int) -> float:
         return em
 
 
-def emas(list_x: List[float], n: int) -> List[float]:
+def emas(n: int, list_x: List[float]) -> List[float]:
     min_length = 3 * n - 1
     result_list = []  # mutate
     xs = list_x  # mutate
     while len(xs) > min_length:
-        em = ema(xs, n)
+        em = ema(n, xs)
         result_list.append(em)
         xs = xs[1:]
     return result_list
 
 
-def quantile(xs: List[float], q: float) -> float:
+def quantile(q: float, xs: List[float]) -> float:
     length = len(xs)
     n = length + 1
     i = int(q * n - 1.0)
@@ -62,7 +75,7 @@ def quantile(xs: List[float], q: float) -> float:
         return 0.0
 
 
-def rsi_calc(xs: List[float], n: int = 14) -> float:
+def rsi_calc(n: int, xs: List[float]) -> float:
     """ rsi_calc(listb * 100)"""
     num = 14 * n + 1
     long_list = xs[:num]
@@ -73,10 +86,10 @@ def rsi_calc(xs: List[float], n: int = 14) -> float:
         def f(x_, avg): return (avg * (n - 1) + x_) / n
         init_list = xs[: 13 * n + 1]
         tail_list = xs[13 * n:]    # length is n + 1
-        tail_diff = deltas(tail_list)
+        tail_diff = deltas(1, tail_list)
         first_avg_gain = sum(filter(lambda a: a > 0.0, tail_diff)) / n
         first_avg_loss = -(sum(filter(lambda a: a < 0.0, tail_diff))) / n  # mypy error using abs
-        init_diff = deltas(init_list)
+        init_diff = deltas(1, init_list)
         gain_list = list(map(lambda a: a if a > 0.0 else 0.0, init_diff))
         loss_list = list(map(lambda a: abs(a) if a < 0.0 else 0.0, init_diff))
         avg_gain = first_avg_gain  # mutate
@@ -96,7 +109,7 @@ def rsi_calc(xs: List[float], n: int = 14) -> float:
         return rs_index
 
 
-def sma(xs: List[float], n: int) -> float:
+def sma(n: int, xs: List[float]) -> float:
     length = len(xs)
     if length < 1 or n > length:
         return 0.0
@@ -104,24 +117,24 @@ def sma(xs: List[float], n: int) -> float:
         return mean(xs[:n])
 
 
-def smas(list_x: List[float], n: int) -> List[float]:
+def smas(n: int, list_x: List[float]) -> List[float]:
     result_list = []
     xs = list_x
     while len(xs) > (n - 1):
-        mu = sma(xs, n)
+        mu = sma(n, xs)
         result_list.append(mu)
         xs = xs[1:]
     return result_list
 
 
-def steep(list_x: List[float], n: int) -> float:
+def steep(n: int, list_x: List[float]) -> float:
     def delta(x): return (mu - x) / mu + 1
     i = n * 3 + 5
     list_i = list_x[:i]  # do not use list as variable name
-    mu = ema(list_i, n)
-    print(mu)
-    em_list = emas(list_i[1:], n)
-    print(em_list)
+    mu = ema(n, list_i)
+    #print(mu)
+    em_list = emas(n, list_i[1:])
+    #print(em_list)
     delta_list = list(map(delta, em_list))
     steepness = mean(delta_list) * 100
     return steepness
@@ -137,4 +150,4 @@ if __name__ == '__main__':
     listbbb = [22.17, 22.4, 23.1, 22.68, 23.33, 23.1, 23.19, 23.65, 23.87, 23.82
                   , 23.63, 23.95, 23.83, 23.75, 24.05, 23.36, 22.61, 22.38, 22.39, 22.15
                   , 22.29, 22.24, 22.43, 22.23, 22.13, 22.18, 22.17, 22.08, 22.19, 22.27]
-    print(rsi_calc(listbbb*100))
+    print(rsi_calc(14, listbbb*100))
