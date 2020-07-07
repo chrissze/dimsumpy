@@ -23,16 +23,15 @@ def upsert_dict(table: str, dict: Dict, primarykeys: List[str], con: connection)
         c: cursor = con.cursor()
         query: str = upsertquery(table, dict.keys(), primarykeys)
         values = tuple(dict.values())
+        print(f'query is {query}')
         c.execute(query, values)
         c.close()
         con.commit()
         pkvalue: Any = dict.get(primarykeys[0])
         return str(pkvalue) # should be the symbol
     except Exception as err:
+        print(err)
         return str(err)
-    finally:
-        if con:
-            con.close()
 
 
 
@@ -44,5 +43,6 @@ def db_exec(command: str, con: connection ) -> str:
         result = con.commit()
         return str(result)
     except Exception as err:
+        print(err)
         return str(err)
 
