@@ -35,7 +35,10 @@ def upsert_dict(table: str, dict: Dict, primarykeys: List[str], con: connection)
 
 
 
-def db_exec(command: str, con: connection ) -> str:
+def execute_postgres_command(command: str, con: connection ) -> str:
+    '''
+    There might be similar function in the official psycopg
+    '''
     try:
         c: cursor = con.cursor()
         c.execute(command)
