@@ -34,7 +34,7 @@ def get_html_soup(url: str) -> BeautifulSoup :
     return soup
 
 
-def get_html_dataframes(url: str) -> List[DataFrame]:
+def get_html_dataframes(url: str, header=None) -> List[DataFrame]:
     '''
     * INDEPENDENT *
     IMPORTS: beautifulsoup4, pandas, requests
@@ -50,7 +50,7 @@ def get_html_dataframes(url: str) -> List[DataFrame]:
     html_text: str = get_html_text(url)
     soup: BeautifulSoup = BeautifulSoup(html_text, 'html.parser')
     soup_tables: ResultSet = soup.find_all('table')
-    dataframes: List[DataFrame] = pandas.read_html(html_text, header=0) if soup_tables else []
+    dataframes: List[DataFrame] = pandas.read_html(html_text, header=header) if soup_tables else []
     return dataframes
 
 
