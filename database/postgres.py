@@ -81,7 +81,7 @@ def upsert_psycopg(dict: Dict, table: str, primary_key_list: List[str], connecti
 
 
 
-def upsert_many_dataframes(df: DataFrame, table: str, primary_key_list: List[str], connection: Connection) -> str:
+def upsert_many_dataframe(dataframe: DataFrame, table: str, primary_key_list: List[str], connection: Connection) -> str:
     """
     DEPENDS ON:  make_upsert_psycopg_query()
     IMPORTS: psycopg, pandas
@@ -95,8 +95,8 @@ def upsert_many_dataframes(df: DataFrame, table: str, primary_key_list: List[str
     this function is tested successfully on pizzapy/reference_example/executemany_success.py
 
     """
-    columns: List[str] = [] if df.empty else df.columns.tolist()
-    entries = [] if df.empty else [tuple(value) for value in df.values]
+    columns: List[str] = [] if dataframe.empty else dataframe.columns.tolist()
+    entries = [] if dataframe.empty else [tuple(value) for value in dataframe.values]
     query: str = make_upsert_psycopg_query(table, columns=columns, primary_key_list=primary_key_list)    
     with connection as con:
         with con.cursor() as cur:
