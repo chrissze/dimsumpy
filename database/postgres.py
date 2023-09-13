@@ -1,4 +1,4 @@
-'''
+"""
 I should put this into requirements.txt to install - psycopg[binary, pool]
 
 psycopg Documentation:
@@ -14,7 +14,7 @@ executemany:
     WRONG: cur.executemany(cmd, list(my_generator))
 
 
-'''
+"""
 
 
 from typing import Any, Dict, List, Tuple
@@ -24,7 +24,7 @@ from psycopg import Connection  # psycopg 3
 
 
 def execute_psycopg(command: str, connection: Connection) -> None:
-    '''
+    """
     * INDEPENDENT *
     IMPORTS: psycopg
 
@@ -32,7 +32,7 @@ def execute_psycopg(command: str, connection: Connection) -> None:
 
     con.commit() will just return None for successful execution.
     I can use pandas.read_sql if I want to fetch the result.
-    '''
+    """
     with connection as con:
         con.execute(command)
         con.commit()
@@ -40,13 +40,13 @@ def execute_psycopg(command: str, connection: Connection) -> None:
 
 
 def make_upsert_psycopg_query(table: str, columns: List[str], primary_key_list: List[str]) -> str:
-    '''
+    """
     * INDEPENDENT *
 
     make a psycopg version 3 Postgres UPSERT SQL string without semicolon.
     return SQL query example:
         INSERT INTO stock_guru (symbol, td, t, wealth_pc) VALUES (%s, %s, %s, %s) ON CONFLICT (symbol, td) DO UPDATE SET (t, wealth_pc) = (EXCLUDED.t, EXCLUDED.wealth_pc)
-    '''
+    """
     columns_str: str = ', '.join(columns)
     number_of_columns: int = len(columns)
     placeholders: str = ', '.join(['%s'] * number_of_columns)
@@ -60,12 +60,12 @@ def make_upsert_psycopg_query(table: str, columns: List[str], primary_key_list: 
 
 
 def upsert_psycopg(dict: Dict, table: str, primary_key_list: List[str], connection: Connection) -> str:
-    '''
+    """
     DEPENDS ON:  make_upsert_psycopg_query()
     IMPORTS: psycopg
 
     the connection parameter can be a function that returns a psycopg 3 Connection. For example, make_psycopg_connection() in pizzapy program.
-    '''
+    """
     query: str = make_upsert_psycopg_query(table, columns=dict.keys(), primary_key_list=primary_key_list)
     values = tuple(dict.values())
     with connection as con:
@@ -77,7 +77,7 @@ def upsert_psycopg(dict: Dict, table: str, primary_key_list: List[str], connecti
 
 
 def upsert_many_psycopg(dictionaries: List[Dict], table: str, primary_key_list: List[str], connection: Connection) -> str:
-    '''
+    """
     DEPENDS ON:  make_upsert_psycopg_query()
     IMPORTS: psycopg
 
@@ -93,7 +93,7 @@ def upsert_many_psycopg(dictionaries: List[Dict], table: str, primary_key_list: 
 
     I would rather loop through a list of stock symbols, fetch a DictProxy, and run upsert_psycopg() one by one.
 
-    '''
+    """
     columns: List[str] = dictionaries[0].keys() if dictionaries else []
     query: str = make_upsert_psycopg_query(table, columns=columns, primary_key_list=primary_key_list)
     values_list: List[List] = [dict.values() for dict in dictionaries]
