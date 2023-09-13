@@ -1,6 +1,7 @@
 
 # STANDARD LIBRARIES
 from http.client import HTTPResponse
+import io
 import shutil
 from typing import Dict, List
 import urllib
@@ -88,7 +89,16 @@ def save_urllib_file(url: str, output: str='file.txt') -> None:
     with urllib.request.urlopen(req) as response, open(output, 'wb') as f:
         shutil.copyfileobj(response, f)
         
+    
 
+def get_csv_dataframe(url: str, header=None) -> DataFrame :
+    """ 
+    DEPENDS ON: get_urllib_text()
+    IMPORTS: pandas, io
+    """
+    text: str = get_urllib_text(url)
+    df = pandas.read_csv(io.StringIO(text), header=header)
+    return df
 
 
 if __name__ == '__main__':

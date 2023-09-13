@@ -16,11 +16,13 @@ executemany:
 
 """
 
-
+# STANDARD LIBS
 from typing import Any, Dict, List, Tuple
 
+# THIRD PARTY LIBS
+import pandas
+from pandas import DataFrame
 from psycopg import Connection  # psycopg 3
-
 
 
 def execute_psycopg(command: str, connection: Connection) -> None:
@@ -76,7 +78,43 @@ def upsert_psycopg(dict: Dict, table: str, primary_key_list: List[str], connecti
 
 
 
-def upsert_many_psycopg(dictionaries: List[Dict], table: str, primary_key_list: List[str], connection: Connection) -> str:
+
+
+
+def upsert_many_dataframes(df: DataFrame, table: str, primary_key_list: List[str], connection: Connection) -> str:
+    """
+    DEPENDS ON:  make_upsert_psycopg_query()
+    IMPORTS: psycopg, pandas
+
+    df argument is a single dataframe with a header row.
+
+    I have to convert it to tuples in order to be used in psycopg.
+
+    the connection parameter can be a function that returns a psycopg 3 Connection. For example, make_psycopg_connection() in pizzapy program.
+
+    this function is tested successfully on pizzapy/reference_example/executemany_success.py
+
+    """
+    columns: List[str] = [] if df.empty else df.columns.tolist()
+    entries = [] if df.empty else [tuple(value) for value in df.values]
+    query: str = make_upsert_psycopg_query(table, columns=columns, primary_key_list=primary_key_list)    
+    with connection as con:
+        with con.cursor() as cur:
+            cur.executemany(query, entries)
+        con.commit()
+    return query
+
+
+
+
+
+
+
+
+
+
+
+def upsert_many_dicts(dictionaries: List[Dict], table: str, primary_key_list: List[str], connection: Connection) -> str:
     """
     DEPENDS ON:  make_upsert_psycopg_query()
     IMPORTS: psycopg
