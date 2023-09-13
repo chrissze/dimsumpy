@@ -46,6 +46,8 @@ def get_html_dataframes(url: str, header=None) -> List[DataFrame]:
     If there is non <table> tag, soup_tables will be just be empty ResultRet [], soup.find_all() function is safe.
     
     I MUST ensure html_text has a <table> tag, otherwise pandas.read_html will have No tables found error.
+
+    for the header keyword argument, the default is None, that is no header row, if I want to have the first row as header row, I could write header=0) 
     '''
     html_text: str = get_html_text(url)
     soup: BeautifulSoup = BeautifulSoup(html_text, 'html.parser')
