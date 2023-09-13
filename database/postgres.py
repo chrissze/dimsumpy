@@ -94,6 +94,8 @@ def upsert_many_dataframe(dataframe: DataFrame, table: str, primary_key_list: Li
 
     this function is tested successfully on pizzapy/reference_example/executemany_success.py
 
+    dataframe.values type is numpy.ndarray, it will not include the header row.
+    entries' type is List of tuples
     """
     columns: List[str] = [] if dataframe.empty else dataframe.columns.tolist()
     entries = [] if dataframe.empty else [tuple(value) for value in dataframe.values]
