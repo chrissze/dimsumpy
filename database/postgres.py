@@ -123,7 +123,7 @@ def upsert_many_dicts(dictionaries: List[Dict], table: str, primary_key_list: Li
 
     dictionaries argument is a list of ProxyDict in pizzapy.
 
-    dict.values() return a dictionary object, I have to convert it to tuple in order to be used in psycopg.
+    dict.values() return a dict_values object, I have to convert it to tuple in order to be used in psycopg.
 
     the connection parameter can be a function that returns a psycopg 3 Connection. For example, make_psycopg_connection() in pizzapy program.
 
@@ -136,7 +136,7 @@ def upsert_many_dicts(dictionaries: List[Dict], table: str, primary_key_list: Li
     """
     columns: List[str] = dictionaries[0].keys() if dictionaries else []
     query: str = make_upsert_psycopg_query(table, columns=columns, primary_key_list=primary_key_list)
-    values_list: List[List] = [dict.values() for dict in dictionaries]
+    values_list: List[Tuple] = [tuple(dict.values()) for dict in dictionaries]
     
     with connection as con:
         with con.cursor() as cur:
