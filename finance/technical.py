@@ -3,6 +3,11 @@ from statistics import mean
 
 
 def deltas(n: int, list_x: List[float]) -> List[float]:
+    """
+
+    USED BY: calculate_rsi()
+    """
+
     if len(list_x) < n + 1:
         return []
     else:
@@ -15,15 +20,18 @@ def deltas(n: int, list_x: List[float]) -> List[float]:
         return result
 
 
-def changes(n: int, list_x: List[float]) -> List[float]:
+def convert_to_changes(n: int, list_x: List[float]) -> List[float]:
+    """
+    convert a list of closing prices to a list of 'changes in n days' 
+    """
     if len(list_x) < n + 1:
         return []
     else:
         xs = list_x
         result = []
         while len(xs) > n:
-            chg = (xs[0] - xs[n]) / xs[n]
-            result.append(chg)
+            change_in_n_periods = (xs[0] - xs[n]) / xs[n]
+            result.append(change_in_n_periods)
             xs = xs[1:]
         return result
 
@@ -75,8 +83,12 @@ def quantile(q: float, xs: List[float]) -> float:
         return 0.0
 
 
-def rsi_calc(n: int, xs: List[float]) -> float:
-    """ rsi_calc(listb * 100)"""
+def calculate_rsi(n: int, xs: List[float]) -> float:
+    """
+    DEPENDS ON: deltas() 
+    calculate_rsi(listb * 100)
+    
+    """
     num = 14 * n + 1
     long_list = xs[:num]
     length = len(long_list)
@@ -110,6 +122,11 @@ def rsi_calc(n: int, xs: List[float]) -> float:
 
 
 def sma(n: int, xs: List[float]) -> float:
+    """
+    IMPORTS: mean()
+
+    Simple Moving Average
+    """
     length = len(xs)
     if length < 1 or n > length:
         return 0.0
@@ -118,6 +135,11 @@ def sma(n: int, xs: List[float]) -> float:
 
 
 def smas(n: int, list_x: List[float]) -> List[float]:
+    """
+    List of Simple Moving Averages
+    mu is greek letter mu which denotes mean
+
+    """
     result_list = []
     xs = list_x
     while len(xs) > (n - 1):
