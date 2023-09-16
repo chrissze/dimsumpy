@@ -1,7 +1,10 @@
 from PySide6.QtWidgets import QMessageBox
 from functools import wraps
 
-def confirmation_self(method):
+def self_confirmation(method):
+    """
+    IMPORTS: QMessageBox, wraps
+    """
     @wraps(method)
     def _impl(self, *method_args, **method_kwargs):
         reply: QMessageBox.StandardButton = QMessageBox.question(
@@ -13,16 +16,19 @@ def confirmation_self(method):
 
 
 
-def list_confirmation():
-    def decorator(method):
-        @wraps(method)
-        def _impl(self, xs):
-            number: int = len(xs)
-            reply: QMessageBox.StandardButton = QMessageBox.question(
-                self, 'Confirmation', f'Do you want to work on {number} items?', QMessageBox.Yes | QMessageBox.Cancel)
-            if reply == QMessageBox.Yes:
-                method_output = method(self, xs)
-                return method_output
-        return _impl
-    return decorator
+def list_confirmation(method):
+    """
+    IMPORTS: QMessageBox, wraps
+    This decorator requires that the function or method have (self, list) arguments.
+    I need to put @list_confirmation on top of function definition. 
+    """
+    @wraps(method)
+    def _impl(self, xs):
+        number: int = len(xs)
+        reply: QMessageBox.StandardButton = QMessageBox.question(
+            self, 'Confirmation', f'Do you want to work on {number} items?', QMessageBox.Yes | QMessageBox.Cancel)
+        if reply == QMessageBox.Yes:
+            method_output = method(self, xs)
+            return method_output
+    return _impl
 
