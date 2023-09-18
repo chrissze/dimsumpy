@@ -5,7 +5,7 @@
 from PySide6.QtCore import QThread
 
 
-class CustomThread(QThread):
+class MyThread(QThread):
     """
     QThread is the base class.
     """
@@ -14,7 +14,8 @@ class CustomThread(QThread):
         self.func = func            # so that self.run() can access func
         self.callback = callback    # so self.callitback() can access callback
         self.args = args            # so that self.run() can access args
-        self.finished.connect(self.callitback)
+        self.finished.connect(self.callitback)      # I could not just use self.callback
+
 
     def __del__(self):
         self.wait()
@@ -23,4 +24,4 @@ class CustomThread(QThread):
         self.func(*self.args)
 
     def callitback(self) -> None:      # for self.finished.connect()
-        self.callback()
+        self.callback()        # I should not include self as argument, otherwise, real arguments like tid will not be matched.
