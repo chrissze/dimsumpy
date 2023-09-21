@@ -1,23 +1,8 @@
-from typing import List
+
+# STANDARD LIBS
+from typing import List, Optional
 from statistics import mean
 
-
-def deltas(n: int, list_x: List[float]) -> List[float]:
-    """
-
-    USED BY: calculate_rsi()
-    """
-
-    if len(list_x) < n + 1:
-        return []
-    else:
-        xs = list_x
-        result = []
-        while len(xs) > n:
-            diff = xs[0] - xs[n]
-            result.append(diff)
-            xs = xs[1:]
-        return result
 
 
 def convert_to_changes(n: int, list_x: List[float]) -> List[float]:
@@ -83,17 +68,38 @@ def quantile(q: float, xs: List[float]) -> float:
         return 0.0
 
 
-def calculate_rsi(n: int, xs: List[float]) -> float:
+def deltas(n: int, list_x: List[float]) -> List[float]:
+    """
+    USED BY: calculate_rsi()
+    """
+
+    if len(list_x) < n + 1:
+        return []
+    else:
+        xs = list_x
+        result = []
+        while len(xs) > n:
+            diff = xs[0] - xs[n]
+            result.append(diff)
+            xs = xs[1:]
+        return result
+
+
+
+def calculate_rsi(n: int, xs: List[float]) -> Optional[float]:
     """
     DEPENDS ON: deltas() 
     calculate_rsi(listb * 100)
     
+    typical RSI input list needs to be at least 14 * 14 + 1 days, that is 197 trading days.
+    Weekly RSI requires 197 * 5, approximately 1000 trading days (4 years)
+
     """
     num = 14 * n + 1
     long_list = xs[:num]
     length = len(long_list)
     if length != num:
-        return 0
+        return None
     else:
         def f(x_, avg): return (avg * (n - 1) + x_) / n
         init_list = xs[: 13 * n + 1]
