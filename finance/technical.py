@@ -23,6 +23,8 @@ def convert_to_changes(n: int, list_x: List[float]) -> List[float]:
 
 def ema(n: int, list_x: List[float]) -> float:
     """
+    USED BY: steep
+    
     test: listx = [22.17, 22.4, 23.1, 22.68, 23.33, 23.1, 23.19, 23.65, 23.87, 23.82
                   , 23.63, 23.95, 23.83, 23.75, 24.05, 23.36, 22.61, 22.38, 22.39, 22.15
                   , 22.29, 22.24, 22.43, 22.23, 22.13, 22.18, 22.17, 22.08, 22.19, 22.27]
@@ -46,6 +48,9 @@ def ema(n: int, list_x: List[float]) -> float:
 
 
 def emas(n: int, list_x: List[float]) -> List[float]:
+    """
+    USED BY: steep
+    """
     min_length = 3 * n - 1
     result_list = []  # mutate
     xs = list_x  # mutate
@@ -95,10 +100,8 @@ def calculate_rsi(n: int, xs: List[float]) -> Optional[float]:
     Weekly RSI requires 197 * 5, approximately 1000 trading days (4 years)
 
     """
-    num = 14 * n + 1
-    long_list = xs[:num]
-    length = len(long_list)
-    if length != num:
+    minimum_length = 14 * n + 1
+    if len(xs) < minimum_length:
         return None
     else:
         def f(x_, avg): return (avg * (n - 1) + x_) / n
@@ -127,15 +130,14 @@ def calculate_rsi(n: int, xs: List[float]) -> Optional[float]:
         return rs_index
 
 
-def sma(n: int, xs: List[float]) -> float:
+def sma(n: int, xs: List[float]) -> Optional[float]:
     """
     IMPORTS: mean()
 
     Simple Moving Average
     """
-    length = len(xs)
-    if length < 1 or n > length:
-        return 0.0
+    if n > len(xs):
+        return None
     else:
         return mean(xs[:n])
 
@@ -155,17 +157,27 @@ def smas(n: int, list_x: List[float]) -> List[float]:
     return result_list
 
 
-def steep(n: int, list_x: List[float]) -> float:
-    def delta(x): return (mu - x) / mu + 1
-    i = n * 3 + 5
-    list_i = list_x[:i]  # do not use list as variable name
-    mu = ema(n, list_i)
-    #print(mu)
-    em_list = emas(n, list_i[1:])
-    #print(em_list)
-    delta_list = list(map(delta, em_list))
-    steepness = mean(delta_list) * 100
-    return steepness
+def steep(n: int, xs: List[float]) -> Optional[float]:
+    """
+    DEPENDS ON: ema, emas
+
+    steep20 requires minimum length of list_x = 20 * 3 + 5 = 65
+    steep50 requires minimum length of list_x = 50 * 3 + 5 = 155
+
+    em_list needs to skip the first value because first value is already calculated as em_value, which is a base for delta() function.
+    """
+    def delta(x): 
+        return (em_value - x) / em_value + 1
+    minimum_length = n * 3 + 5
+    if len(xs) >= minimum_length:
+        short_list = xs[:minimum_length]  # do not use list as variable name
+        em_value = ema(n, short_list)
+        em_list = emas(n, short_list[1:])
+        delta_list = list(map(delta, em_list))
+        steepness = mean(delta_list)
+        return steepness
+    else:
+        return None
 
 
 
