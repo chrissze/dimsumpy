@@ -165,16 +165,19 @@ def steep(n: int, xs: List[float]) -> Optional[float]:
     steep50 requires minimum length of list_x = 50 * 3 + 5 = 155
 
     em_list needs to skip the first value because first value is already calculated as em_value, which is a base for delta() function.
+
+    steep lower than 1000 is in downtrend.
     """
     def delta(x): 
         return (em_value - x) / em_value + 1
+    
     minimum_length = n * 3 + 5
     if len(xs) >= minimum_length:
         short_list = xs[:minimum_length]  # do not use list as variable name
         em_value = ema(n, short_list)
         em_list = emas(n, short_list[1:])
         delta_list = list(map(delta, em_list))
-        steepness = mean(delta_list)
+        steepness = mean(delta_list) * 1000
         return steepness
     else:
         return None
