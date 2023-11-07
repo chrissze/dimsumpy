@@ -1,5 +1,11 @@
-.DS_Store
 
+### MY CUSTOM IGNORES
+.DS_Store
+certs.pem
+
+.idea/   # IntelliJ's project specific settings files
+
+venv/
 
 
 
