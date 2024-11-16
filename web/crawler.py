@@ -1,7 +1,7 @@
 
 # STANDARD LIBRARIES
 from http.client import HTTPResponse
-import io
+from io import StringIO
 import shutil
 from typing import Dict, List
 import urllib
@@ -55,7 +55,7 @@ def get_html_dataframes(url: str, header=None) -> List[DataFrame]:
     html_text: str = get_html_text(url)
     soup: BeautifulSoup = BeautifulSoup(html_text, 'html.parser')
     soup_tables: ResultSet = soup.find_all('table')
-    dataframes: List[DataFrame] = pandas.read_html(html_text, header=header) if soup_tables else []
+    dataframes: List[DataFrame] = pandas.read_html(StringIO(html_text), header=header) if soup_tables else []
     return dataframes
 
 
@@ -97,7 +97,7 @@ def get_csv_dataframe(url: str, header=None) -> DataFrame :
     IMPORTS: pandas, io
     """
     text: str = get_urllib_text(url)
-    df = pandas.read_csv(io.StringIO(text), header=header)
+    df = pandas.read_csv(StringIO(text), header=header)
     return df
 
 
