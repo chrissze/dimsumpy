@@ -15,6 +15,44 @@ import requests
 from requests.models import Response
 
 
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+
+def get_selenium_text(url: str, headless: bool = True, timeout: int = 10) -> str:
+    """
+
+    Args:
+        url (str): The URL of the webpage to fetch.
+        headless (bool): Whether to run the browser in headless mode (default: True).
+        timeout (int): Maximum wait time in seconds for the page to load (default: 10).
+
+    Returns:
+        str: The HTML source code of the webpage.
+
+    driver.quit() Ensure the browser quits even if an error occurs
+    """
+    options = Options()
+    if headless:
+        options.add_argument("--headless")
+
+    driver = webdriver.Firefox(options=options)
+    
+    driver.get(url)
+        
+    WebDriverWait(driver, timeout).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+        
+    html_source = driver.page_source
+    
+    driver.quit()
+
+    return html_source
+
+
+
 safari_headers: Dict[str, str] = {'User-Agent': 'Safari/13.1.1'}
 
 
