@@ -24,6 +24,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 def get_selenium_text(url: str, headless: bool = True, timeout: int = 10) -> str:
     """
+    Selenium will emulate a real browser to open web pages.
 
     Args:
         url (str): The URL of the webpage to fetch.
@@ -53,15 +54,22 @@ def get_selenium_text(url: str, headless: bool = True, timeout: int = 10) -> str
 
 
 
-safari_headers: Dict[str, str] = {'User-Agent': 'Safari/13.1.1'}
+
+default_headers: Dict[str, str] = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.5993.89 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
+}
+
 
 
 def get_html_text(url: str) -> str :
     """ 
     * INDEPENDENT *
     IMPORTS: requests
+
+    yahoo finance requires Accept field headers
     """
-    html_response: Response = requests.get(url, headers=safari_headers)
+    html_response: Response = requests.get(url, headers=default_headers)
     return html_response.text
 
 
@@ -103,7 +111,7 @@ def get_urllib_response(url: str) -> HTTPResponse :
     * INDEPENDENT *
     IMPORTS: urllib
     """
-    req = urllib.request.Request(url, headers=safari_headers)
+    req = urllib.request.Request(url, headers=default_headers)
     with urllib.request.urlopen(req) as response:
         return response
     
@@ -113,7 +121,7 @@ def get_urllib_text(url: str) -> str :
     * INDEPENDENT *
     IMPORTS: urllib
     """
-    req = urllib.request.Request(url, headers=safari_headers)
+    req = urllib.request.Request(url, headers=default_headers)
     with urllib.request.urlopen(req) as response:
         return response.read().decode('utf-8') 
     
@@ -123,7 +131,7 @@ def save_urllib_file(url: str, output: str='file.txt') -> None:
     * INDEPENDENT *
     IMPORTS: shutil, urllib
     """
-    req = urllib.request.Request(url, headers=safari_headers)
+    req = urllib.request.Request(url, headers=_headers)
     with urllib.request.urlopen(req) as response, open(output, 'wb') as f:
         shutil.copyfileobj(response, f)
         
@@ -139,12 +147,15 @@ def get_csv_dataframe(url: str, header=None) -> DataFrame :
     return df
 
 
-if __name__ == '__main__':
-
-    s = input('which str to you want to input? ')
-
-    x = get_urllib_text(s) 
+def test1():
+    """
+    
+    """
+    x = 'https://finance.yahoo.com/quote/NVDA/options?date=1734652800'
     print(x)
 
 
-    
+
+
+if __name__ == '__main__':
+    test1()
