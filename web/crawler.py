@@ -62,6 +62,14 @@ def get_cloudscraper_dataframes(url: str, header=None) -> List[DataFrame]:
     return dataframes
 
 
+def get_cloudscraper_soup(url: str) -> BeautifulSoup :
+    """ 
+    DEPENDS ON: get_cloudscraper_text()
+    IMPORTS: beautifulsoup4
+    """
+    html_text: str = get_cloudscraper_text(url)
+    soup: BeautifulSoup = BeautifulSoup(html_text, 'html.parser')
+    return soup
 
 
 def get_selenium_text(url: str, headless: bool = True, timeout: int = 10) -> str:
@@ -116,7 +124,7 @@ def get_requests_text(url: str) -> str :
 
 
 
-def get_html_soup(url: str) -> BeautifulSoup :
+def get_requests_soup(url: str) -> BeautifulSoup :
     """ 
     DEPENDS ON: get_requests_text()
     IMPORTS: beautifulsoup4
@@ -198,6 +206,11 @@ def get_csv_dataframe(url: str, header=None) -> DataFrame :
 get_html_text = get_cloudscraper_text
 
 get_html_dataframes = get_cloudscraper_dataframes
+
+get_html_soup = get_cloudscraper_soup
+
+
+
 
 
 
