@@ -25,45 +25,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 
-
-
-def get_cloudscraper_text(url: str) -> str:
-    """ 
-    * INDEPENDENT *
-    IMPORTS: cloudscraper
-
-    GROK 3 suggest this code
-    """
-    
-    scraper = create_scraper()
-
-    response = scraper.get(url)
-
-    if response.status_code == 200:
-        page_source = response.text
-        return page_source
-
-    else:
-        msg = f"Failed to fetch page. Status code: {response.status_code}"
-        return msg
-
-
-def get_cloudscraper_dataframes(url: str, header=None) -> List[DataFrame]:
-    """
-    DEPENDS ON: get_cloudscraper_text()
-
-    IMPORTS: beautifulsoup4, pandas, cloudscraper
-
-    """
-    html_text: str = get_cloudscraper_text(url)
-    soup: BeautifulSoup = BeautifulSoup(html_text, 'html.parser')
-    soup_tables: ResultSet = soup.find_all('table')
-    dataframes: List[DataFrame] = pandas.read_html(StringIO(html_text), header=header) if soup_tables else []
-    return dataframes
-
-
-
-
 def get_selenium_text(url: str, headless: bool = True, timeout: int = 10) -> str:
     """
     Selenium will emulate a real browser to open web pages.
@@ -103,8 +64,25 @@ default_headers: Dict[str, str] = {
 }
 
 
+headers2: Dict[str, str] = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.5993.89 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'same-origin',
+    'Sec-Fetch-User': '?1',
+    'Pragma': 'no-cache',
+    'Cache-Control': 'no-cache'
+}
 
-def get_requests_text(url: str) -> str :
+
+
+
+def get_html_text(url: str) -> str :
     """ 
     * INDEPENDENT *
     IMPORTS: requests
@@ -115,19 +93,61 @@ def get_requests_text(url: str) -> str :
     return html_response.text
 
 
+
+def get_cloudscraper_text(url: str) -> str:
+    """ 
+    * INDEPENDENT *
+    IMPORTS: cloudscraper
+
+    GROK 3 suggest this code
+    """
+    
+    scraper = create_scraper()
+
+    response = scraper.get(url)
+
+    if response.status_code == 200:
+        page_source = response.text
+        return page_source
+
+    else:
+        msg = f"Failed to fetch page. Status code: {response.status_code}"
+        return msg
+        
+
+
+
+
+
+
 def get_html_soup(url: str) -> BeautifulSoup :
     """ 
-    DEPENDS ON: get_requests_text()
+    DEPENDS ON: get_html_text()
     IMPORTS: beautifulsoup4
     """
-    html_text: str = get_requests_text(url)
+    html_text: str = get_html_text(url)
     soup: BeautifulSoup = BeautifulSoup(html_text, 'html.parser')
     return soup
 
 
-def get_requests_dataframes(url: str, header=None) -> List[DataFrame]:
+def get_cloudscraper_dataframes(url: str, header=None) -> List[DataFrame]:
     """
-    DEPENDS: get_requests_text
+    * INDEPENDENT *
+    IMPORTS: beautifulsoup4, pandas, cloudscraper
+
+    """
+    html_text: str = get_cloudscraper_text(url)
+    soup: BeautifulSoup = BeautifulSoup(html_text, 'html.parser')
+    soup_tables: ResultSet = soup.find_all('table')
+    dataframes: List[DataFrame] = pandas.read_html(StringIO(html_text), header=header) if soup_tables else []
+    return dataframes
+
+
+
+
+def get_html_dataframes(url: str, header=None) -> List[DataFrame]:
+    """
+    * INDEPENDENT *
     IMPORTS: beautifulsoup4, pandas, requests
 
     https://google.com   (has <table>)
@@ -140,15 +160,12 @@ def get_requests_dataframes(url: str, header=None) -> List[DataFrame]:
 
     for the header keyword argument, the default is None, that is no header row, if I want to have the first row as header row, I could write header=0) 
     """
-    html_text: str = get_requests_text(url)
+    html_text: str = get_html_text(url)
     soup: BeautifulSoup = BeautifulSoup(html_text, 'html.parser')
     soup_tables: ResultSet = soup.find_all('table')
     dataframes: List[DataFrame] = pandas.read_html(StringIO(html_text), header=header) if soup_tables else []
     return dataframes
 
-
-
-get_html_dataframes = get_cloudscraper_dataframes
 
 
 
@@ -193,6 +210,10 @@ def get_csv_dataframe(url: str, header=None) -> DataFrame :
     return df
 
 
+
+
+
+
 def test1():
     """
     
@@ -209,10 +230,11 @@ def test2():
     """
     url = 'https://www.gurufocus.com/term/tangibles-book-per-share/NVDA'
 
-    x = get_html_dataframes(url)
+    x = get_cloudscraper_dataframes(url)
     print(x)
 
 
 
+
 if __name__ == '__main__':
-    test2()
+    test1()
