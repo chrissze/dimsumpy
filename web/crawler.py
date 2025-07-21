@@ -115,6 +115,7 @@ def get_requests_text(url: str) -> str :
     return html_response.text
 
 
+
 def get_html_soup(url: str) -> BeautifulSoup :
     """ 
     DEPENDS ON: get_requests_text()
@@ -148,7 +149,6 @@ def get_requests_dataframes(url: str, header=None) -> List[DataFrame]:
 
 
 
-get_html_dataframes = get_cloudscraper_dataframes
 
 
 
@@ -191,6 +191,14 @@ def get_csv_dataframe(url: str, header=None) -> DataFrame :
     text: str = get_urllib_text(url)
     df = pandas.read_csv(StringIO(text), header=header)
     return df
+
+
+
+
+get_html_text = get_cloudscraper_text
+
+get_html_dataframes = get_cloudscraper_dataframes
+
 
 
 def test1():
