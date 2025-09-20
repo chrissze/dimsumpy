@@ -218,9 +218,9 @@ def test1():
     """
     
     """
-    url = 'https://www.gurufocus.com/term/tangibles-book-per-share/NVDA'
+    url = 'https://macrotrends.net/stocks/charts/NVDA/nvidia/shares-outstanding'
 
-    x = get_cloudscraper_text(url)
+    x = get_selenium_text(url, headless=False)
     print(x)
 
 
@@ -228,7 +228,7 @@ def test2():
     """
     
     """
-    url = 'https://www.gurufocus.com/term/tangibles-book-per-share/NVDA'
+    url = 'https://macrotrends.net/stocks/charts/NVDA/nvidia/shares-outstanding'
 
     x = get_html_dataframes(url)
     print(x)
@@ -236,4 +236,4 @@ def test2():
 
 
 if __name__ == '__main__':
-    test2()
+    test1()
