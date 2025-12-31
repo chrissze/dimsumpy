@@ -26,4 +26,4 @@ dev = [
 # This tells setuptools to find packages like ./batterypy
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["dimsumpypy*"]
+include = ["dimsumpy*"]
