@@ -46,6 +46,34 @@ from httpx import Response
 import pandas as pd
 
 
+def get_cap(symbol: str) -> float | None:
+    """
+
+    """
+    data: dict[str, str] = get_overview(symbol)   # ETF result will be an empty dict {}
+
+    cap_str: str | None = data.get('MarketCapitalization')
+
+    if cap_str is not None:
+        return float(cap_str)
+    else:
+        return get_etf_aum(symbol)         
+
+
+async def async_cap(symbol: str) -> float | None:
+    """
+
+    """
+    data: dict[str, str] = await async_overview(symbol)   # ETF result will be an empty dict {}
+
+    cap_str: str | None = data.get('MarketCapitalization')
+
+    if cap_str is not None:
+        return float(cap_str)
+    else:
+        aum: float | None = await async_etf_aum(symbol)         
+        return aum
+
 
 
 def get_etf_profile(symbol: str, apikey=None) -> dict[str, str | list[dict[str, str]]]:
@@ -106,6 +134,28 @@ async def async_etf_aum(symbol: str) -> float | None:
     return aum
 
 
+
+
+def get_etf_list() -> list[str]:
+    """
+    DEPENDS: get_listing_status
+    """
+    df: pd.DataFrame = get_listing_status()
+    etf_symbols: pd.Series = df.loc[df['assetType'].eq('ETF'), 'symbol']
+    etf_list: list[str] = etf_symbols.tolist()
+    return etf_list
+
+
+
+async def async_etf_list() -> list[str]:
+    """
+    DEPENDS: async_listing_status
+    """
+    df: pd.DataFrame = await async_listing_status()
+    etf_symbols: pd.Series = df.loc[df['assetType'].eq('ETF'), 'symbol']
+    etf_list: list[str] = etf_symbols.tolist()
+    return etf_list
+    
 
 
 
@@ -187,7 +237,7 @@ async def async_historical_options(symbol: str, isodate=None, datatype='json', a
 def get_listing_status(isodate=None, state='active', apikey=None) -> pd.DataFrame:
     """
     # https://www.alphavantage.co/documentation/#listing-status
-    
+
     # To ensure optimal API response time, this endpoint uses the CSV format which is more memory-efficient than JSON.
 
     # By default, state=active and the API will return a list of actively traded stocks and ETFs. Set state=delisted to query a list of delisted assets.
@@ -254,6 +304,10 @@ async def async_listing_status(isodate=None, state='active', apikey=None) -> pd.
 
 
 
+
+
+
+
 def get_overview(symbol: str, apikey=None) -> dict[str, str]:
 
     if apikey is None:
@@ -285,6 +339,28 @@ async def async_overview(symbol: str, apikey=None) -> dict[str, str]:
     return data
 
 
+
+
+
+def get_symbol_search(keywords: str, datatype='json', apikey=None) -> dict[str, list[dict[str, str]]]:
+
+    if apikey is None:
+        apikey = os.getenv('AV_API_KEY')
+        
+    params: dict[str, str] = {
+        'function': 'SYMBOL_SEARCH', 
+        'keywords': keywords, 
+        'datatype': datatype, 
+        'apikey': apikey
+        }
+    
+    r: Response = httpx.get('https://www.alphavantage.co/query', params=params)
+    
+    r.raise_for_status()
+    
+    data: dict[str, list[dict[str, str]]] = r.json()
+    
+    return data
 
 
 
@@ -338,16 +414,17 @@ async def async_time_series_daily(symbol: str, outputsize='compact', datatype='j
 
 async def main() -> None:
     x1, x2 = await asyncio.gather(
-        async_overview('AMD'),
         async_listing_status(),
+        async_cap('SPY'),
     )
 
     print(x1, x2)
 
 
 if __name__ == '__main__':
+    
     asyncio.run(main())
-    #pprint(get_overview('AMD'))
-    #pprint(get_listing_status(state='delisted'))
+    
+    #print(get_cap('NVDA'))
     
     
