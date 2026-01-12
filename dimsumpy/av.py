@@ -30,6 +30,8 @@ async def main() -> None:
 import asyncio
 
 from datetime import date, datetime
+from io import StringIO
+
 from pprint import pprint
 import os
 
@@ -40,6 +42,9 @@ import os
 import httpx
 
 from httpx import Response
+
+import pandas as pd
+
 
 
 
@@ -76,9 +81,41 @@ async def async_etf_profile(symbol: str, apikey=None) -> dict[str, str | list[di
 
 
 
+
+
+def get_etf_aum(symbol: str) -> float | None:
+
+    data: dict[str, str | list[dict[str, str]]] = get_etf_profile(symbol)
+
+    aum_str: str | None = data.get('net_assets')
+
+    aum: float | None = float(aum_str) if aum_str else None
+
+    return aum
+
+
+
+async def async_etf_aum(symbol: str) -> float | None:
+
+    data: dict[str, str | list[dict[str, str]]] = await async_etf_profile(symbol)
+
+    aum_str: str | None = data.get('net_assets')
+
+    aum: float | None = float(aum_str) if aum_str else None
+
+    return aum
+
+
+
+
+
+
+
 def get_historical_options(symbol: str, isodate=None, datatype='json', apikey=None) -> dict[str, str | list[dict[str, str]]]:
     """
     # https://www.alphavantage.co/documentation/#historical-options
+
+    # Any date later than 2008-01-01 is accepted. 
     """
     if apikey is None:
         apikey = os.getenv('AV_API_KEY')
@@ -93,13 +130,11 @@ def get_historical_options(symbol: str, isodate=None, datatype='json', apikey=No
     if isinstance(isodate, str):
         params['date'] = isodate 
     
-    if isinstance(isodate, date):
-        isodate = isodate.isoformat()
-        params['date'] = isodate 
+    elif isinstance(isodate, datetime): 
+        params['date'] = isodate.date().isoformat()
     
-    if isinstance(isodate, datetime):
-        isodate = isodate.date().isoformat()
-        params['date'] = isodate 
+    elif isinstance(isodate, date):
+        params['date'] = isodate.isoformat() 
     
     r: Response = httpx.get('https://www.alphavantage.co/query', params=params)
     r.raise_for_status()
@@ -113,6 +148,10 @@ def get_historical_options(symbol: str, isodate=None, datatype='json', apikey=No
 async def async_historical_options(symbol: str, isodate=None, datatype='json', apikey=None) -> dict[str, str | list[dict[str, str]]]:
     """
     # https://www.alphavantage.co/documentation/#historical-options
+
+    # Any date later than 2008-01-01 is accepted.
+
+    # I must put datetime check before date, as datetime is a subclass of date
     """
     if apikey is None:
         apikey = os.getenv('AV_API_KEY')
@@ -127,13 +166,11 @@ async def async_historical_options(symbol: str, isodate=None, datatype='json', a
     if isinstance(isodate, str):
         params['date'] = isodate 
     
-    if isinstance(isodate, date):
-        isodate = isodate.isoformat()
-        params['date'] = isodate 
+    elif isinstance(isodate, datetime): 
+        params['date'] = isodate.date().isoformat()
     
-    if isinstance(isodate, datetime):
-        isodate = isodate.date().isoformat()
-        params['date'] = isodate 
+    elif isinstance(isodate, date):
+        params['date'] = isodate.isoformat() 
     
     async with httpx.AsyncClient() as client:
         r: Response = await client.get('https://www.alphavantage.co/query', params=params)
@@ -141,6 +178,78 @@ async def async_historical_options(symbol: str, isodate=None, datatype='json', a
         data: dict[str, str | list[dict[str, str]]] = r.json()
 
     return data
+
+
+
+
+
+
+def get_listing_status(isodate=None, state='active', apikey=None) -> pd.DataFrame:
+    """
+    # https://www.alphavantage.co/documentation/#listing-status
+    
+    # To ensure optimal API response time, this endpoint uses the CSV format which is more memory-efficient than JSON.
+
+    # By default, state=active and the API will return a list of actively traded stocks and ETFs. Set state=delisted to query a list of delisted assets.
+
+    # Any YYYY-MM-DD date later than 2010-01-01 is supported.
+    """
+    if apikey is None:
+        apikey = os.getenv('AV_API_KEY')
+        
+    params: dict[str, str] = {
+        'function': 'LISTING_STATUS', 
+        'state': state, 
+        'apikey': apikey
+        }
+    
+    if isinstance(isodate, str):
+        params['date'] = isodate 
+    elif isinstance(isodate, datetime): 
+        params['date'] = isodate.date().isoformat()
+    elif isinstance(isodate, date):
+        params['date'] = isodate.isoformat() 
+    
+    r: Response = httpx.get('https://www.alphavantage.co/query', params=params)
+    
+    r.raise_for_status()
+
+    df: pd.DataFrame = pd.read_csv(StringIO(r.text))
+
+    return df
+
+
+async def async_listing_status(isodate=None, state='active', apikey=None) -> pd.DataFrame:
+    """
+    
+    # To ensure optimal API response time, this endpoint uses the CSV format which is more memory-efficient than JSON.
+
+    # By default, state=active and the API will return a list of actively traded stocks and ETFs. Set state=delisted to query a list of delisted assets.
+
+    # Any YYYY-MM-DD date later than 2010-01-01 is supported.
+    """
+    if apikey is None:
+        apikey = os.getenv('AV_API_KEY')
+        
+    params: dict[str, str] = {
+        'function': 'LISTING_STATUS', 
+        'state': state, 
+        'apikey': apikey
+        }
+    
+    if isinstance(isodate, str):
+        params['date'] = isodate 
+    elif isinstance(isodate, datetime): 
+        params['date'] = isodate.date().isoformat()
+    elif isinstance(isodate, date):
+        params['date'] = isodate.isoformat() 
+    
+    async with httpx.AsyncClient() as client:
+        r: Response = await client.get('https://www.alphavantage.co/query', params=params)
+        r.raise_for_status()
+        df: pd.DataFrame = pd.read_csv(StringIO(r.text))
+
+    return df
 
 
 
@@ -228,21 +337,17 @@ async def async_time_series_daily(symbol: str, outputsize='compact', datatype='j
 
 
 async def main() -> None:
-    x1, x2, x3, x4, x5, x6 = await asyncio.gather(
+    x1, x2 = await asyncio.gather(
         async_overview('AMD'),
-        async_overview('NVDA'),
-        async_etf_profile('QQQ'),
-        async_time_series_daily('META'),
-        async_historical_options('AAPL'),
-        async_historical_options('AAL'),
+        async_listing_status(),
     )
 
-    print(x1, x2, x3, x4, x5)
+    print(x1, x2)
 
 
 if __name__ == '__main__':
     asyncio.run(main())
     #pprint(get_overview('AMD'))
-    #pprint(get_historical_options('QQQ'))
+    #pprint(get_listing_status(state='delisted'))
     
     
