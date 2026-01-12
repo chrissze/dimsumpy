@@ -115,9 +115,6 @@ async def async_close(symbol: str) -> float | None:
 
 
 
-
-
-
 def get_etf_aum(symbol: str) -> float | None:
     """
     DEPENDS: get_etf_profile
@@ -461,6 +458,52 @@ def get_symbol_search(keywords: str, datatype='json', apikey=None) -> dict[str, 
 
 
 
+def get_td_close(symbol: str) -> tuple[date | None, float | None]:
+    """
+    DEPENDS: get_time_series_daily
+    """
+    data: dict[str, dict[str, str] | dict[str, dict[str, str]]] = get_time_series_daily(symbol)
+
+    ohlcv_dict: dict[str, dict[str, str]] = data.get('Time Series (Daily)')
+
+    trading_day_str: str | None = next(iter(ohlcv_dict.keys())) if ohlcv_dict else None
+    
+    td: date | None = date.fromisoformat(trading_day_str) if trading_day_str else None
+    
+    previous_day_quote: dict[str, str] = next(iter(ohlcv_dict.values())) if ohlcv_dict else {}
+    
+    close_str: str | None = previous_day_quote.get('4. close')
+    
+    close: float | None = float(close_str) if close_str else None
+    
+    return td, close 
+
+
+
+
+async def async_td_close(symbol: str) -> tuple[date | None, float | None]:
+    """
+    DEPENDS: async_time_series_daily
+    """
+    data: dict[str, dict[str, str] | dict[str, dict[str, str]]] = await async_time_series_daily(symbol)
+
+    ohlcv_dict: dict[str, dict[str, str]] = data.get('Time Series (Daily)')
+
+    trading_day_str: str | None = next(iter(ohlcv_dict.keys())) if ohlcv_dict else None
+    
+    td: date | None = date.fromisoformat(trading_day_str) if trading_day_str else None
+    
+    previous_day_quote: dict[str, str] = next(iter(ohlcv_dict.values())) if ohlcv_dict else {}
+    
+    close_str: str | None = previous_day_quote.get('4. close')
+    
+    close: float | None = float(close_str) if close_str else None
+    
+    return td, close 
+
+
+
+
 
 def get_time_series_daily(symbol: str, outputsize='compact', datatype='json', apikey=None) -> dict[str, dict[str, str] | dict[str, dict[str, str]]]:
     """
@@ -512,19 +555,22 @@ async def async_time_series_daily(symbol: str, outputsize='compact', datatype='j
 
 
 async def main() -> None:
-    x1, x2 = await asyncio.gather(
-        async_listing_status(),
-        async_option_chain('SPY'),
-    )
+    td, p = await async_td_close('TSM')
+    print(td, p)
+    
+    # x1, x2 = await asyncio.gather(
+    #     async_listing_status(),
+    #     async_option_chain('SPY'),
+    # )
 
-    print(x1, x2)
+    # print(x1, x2)
 
 
 if __name__ == '__main__':
     
     asyncio.run(main())
     
-    #x = len(get_option_chain('SPY', isodate='2025-12-12'))
+    #td, p = get_td_close('AMD')
     
-    #print(x)
+    #print(type(td), p)
     
