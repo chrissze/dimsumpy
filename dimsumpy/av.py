@@ -102,15 +102,15 @@ def get_historical_options(symbol: str, isodate=None, datatype='json', apikey=No
         params['date'] = isodate 
     
     r: Response = httpx.get('https://www.alphavantage.co/query', params=params)
-    
+    r.raise_for_status()
     data: dict[str, str | list[dict[str, str]]] = r.json()
     
     return data
 
 
 
-# todo
-def async_historical_options(symbol: str, isodate=None, datatype='json', apikey=None) -> dict[str, str | list[dict[str, str]]]:
+
+async def async_historical_options(symbol: str, isodate=None, datatype='json', apikey=None) -> dict[str, str | list[dict[str, str]]]:
     """
     # https://www.alphavantage.co/documentation/#historical-options
     """
@@ -135,10 +135,11 @@ def async_historical_options(symbol: str, isodate=None, datatype='json', apikey=
         isodate = isodate.date().isoformat()
         params['date'] = isodate 
     
-    r: Response = httpx.get('https://www.alphavantage.co/query', params=params)
-    
-    data: dict[str, str | list[dict[str, str]]] = r.json()
-    
+    async with httpx.AsyncClient() as client:
+        r: Response = await client.get('https://www.alphavantage.co/query', params=params)
+        r.raise_for_status()
+        data: dict[str, str | list[dict[str, str]]] = r.json()
+
     return data
 
 
@@ -227,20 +228,21 @@ async def async_time_series_daily(symbol: str, outputsize='compact', datatype='j
 
 
 async def main() -> None:
-    x1, x2, x3, x4, x5 = await asyncio.gather(
+    x1, x2, x3, x4, x5, x6 = await asyncio.gather(
         async_overview('AMD'),
         async_overview('NVDA'),
-        async_overview('AAPL'),
         async_etf_profile('QQQ'),
         async_time_series_daily('META'),
+        async_historical_options('AAPL'),
+        async_historical_options('AAL'),
     )
 
     print(x1, x2, x3, x4, x5)
 
 
 if __name__ == '__main__':
-    #asyncio.run(main())
+    asyncio.run(main())
     #pprint(get_overview('AMD'))
-    pprint(get_historical_options('QQQ'))
+    #pprint(get_historical_options('QQQ'))
     
     
