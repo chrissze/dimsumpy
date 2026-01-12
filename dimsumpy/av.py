@@ -1,4 +1,5 @@
-'''
+"""
+
 
 DOCS:
     https://www.alphavantage.co/documentation/
@@ -12,33 +13,24 @@ NOTES:
 - httpx.AsyncClient()'s default timeout is 5 seconds.
 
 
-async def main() -> None:
-    x1 = await gets_overview('AMD')
-    x2 = await gets_overview('NVDA')
-    x3 = await gets_overview('AAPL')
-    x4 = await gets_overview('META')
-    x5 = await gets_overview('GOOGL')
 
-    print(x1)
-    print(x2)
-    print(x3)
-    print(x4)
-    print(x5)
-
-'''
-
+"""
+# STANDARD LIB
 import asyncio
 
 from datetime import date, datetime
+
 from io import StringIO
 
 from pprint import pprint
+
 import os
 
 
 
 
 
+# THIRD PARTY LIB
 import httpx
 
 from httpx import Response
@@ -46,9 +38,14 @@ from httpx import Response
 import pandas as pd
 
 
+
+
+
+
+
 def get_cap(symbol: str) -> float | None:
     """
-
+    DEPENDS: get_overview. get_etf_aum
     """
     data: dict[str, str] = get_overview(symbol)   # ETF result will be an empty dict {}
 
@@ -62,7 +59,7 @@ def get_cap(symbol: str) -> float | None:
 
 async def async_cap(symbol: str) -> float | None:
     """
-
+    DEPENDS: async_overview. async_etf_aum
     """
     data: dict[str, str] = await async_overview(symbol)   # ETF result will be an empty dict {}
 
@@ -76,35 +73,45 @@ async def async_cap(symbol: str) -> float | None:
 
 
 
-def get_etf_profile(symbol: str, apikey=None) -> dict[str, str | list[dict[str, str]]]:
 
-    if apikey is None:
-        apikey = os.getenv('AV_API_KEY')
-        
-    params: dict[str, str] = {'function': 'ETF_PROFILE', 'symbol': symbol, 'apikey': apikey}
+def get_close(symbol: str) -> float | None:
+    """
+    DEPENDS: get_time_series_daily
+    """
+    data: dict[str, dict[str, str] | dict[str, dict[str, str]]] = get_time_series_daily(symbol)
+
+    ohlcv_dict: dict[str, dict[str, str]] = data.get('Time Series (Daily)')
+
+    previous_day_quote: dict[str, str] = next(iter(ohlcv_dict.values())) if ohlcv_dict else {}
     
-    r: Response = httpx.get('https://www.alphavantage.co/query', params=params)
+    close_str: str | None = previous_day_quote.get('4. close')
     
-    r.raise_for_status()
+    close: float | None = float(close_str) if close_str else None
     
-    data: dict[str, str | list[dict[str, str]]] = r.json()
+    return close 
+
+
+
+
+async def async_close(symbol: str) -> float | None:
+    """
+    DEPENDS: async_time_series_daily
+    """
+    data: dict[str, dict[str, str] | dict[str, dict[str, str]]] = await async_time_series_daily(symbol)
+
+    ohlcv_dict: dict[str, dict[str, str]] = data.get('Time Series (Daily)')
+
+    previous_day_quote: dict[str, str] = next(iter(ohlcv_dict.values())) if ohlcv_dict else {}
     
-    return data
+    close_str: str | None = previous_day_quote.get('4. close')
+    
+    close: float | None = float(close_str) if close_str else None
+    
+    return close 
 
 
 
-async def async_etf_profile(symbol: str, apikey=None) -> dict[str, str | list[dict[str, str]]]:
-    if apikey is None:
-        apikey = os.getenv("AV_API_KEY")
 
-    params: dict[str, str] = {'function': 'ETF_PROFILE', 'symbol': symbol, 'apikey': apikey}
-
-    async with httpx.AsyncClient() as client:
-        r = await client.get('https://www.alphavantage.co/query', params=params)
-        r.raise_for_status()
-        data: dict[str, str | list[dict[str, str]]] = r.json()
-
-    return data
 
 
 
@@ -112,7 +119,9 @@ async def async_etf_profile(symbol: str, apikey=None) -> dict[str, str | list[di
 
 
 def get_etf_aum(symbol: str) -> float | None:
-
+    """
+    DEPENDS: get_etf_profile
+    """
     data: dict[str, str | list[dict[str, str]]] = get_etf_profile(symbol)
 
     aum_str: str | None = data.get('net_assets')
@@ -124,7 +133,9 @@ def get_etf_aum(symbol: str) -> float | None:
 
 
 async def async_etf_aum(symbol: str) -> float | None:
-
+    """
+    DEPENDS: async_etf_profile
+    """
     data: dict[str, str | list[dict[str, str]]] = await async_etf_profile(symbol)
 
     aum_str: str | None = data.get('net_assets')
@@ -158,11 +169,48 @@ async def async_etf_list() -> list[str]:
     
 
 
+def get_etf_profile(symbol: str, apikey=None) -> dict[str, str | list[dict[str, str]]]:
+    """
+    ** INDEPENDENT ENDPOINT **
+    """
+    if apikey is None:
+        apikey = os.getenv('AV_API_KEY')
+        
+    params: dict[str, str] = {'function': 'ETF_PROFILE', 'symbol': symbol, 'apikey': apikey}
+    
+    r: Response = httpx.get('https://www.alphavantage.co/query', params=params)
+    
+    r.raise_for_status()
+    
+    data: dict[str, str | list[dict[str, str]]] = r.json()
+    
+    return data
+
+
+
+async def async_etf_profile(symbol: str, apikey=None) -> dict[str, str | list[dict[str, str]]]:
+    """
+    ** INDEPENDENT ENDPOINT **
+    """
+    if apikey is None:
+        apikey = os.getenv("AV_API_KEY")
+
+    params: dict[str, str] = {'function': 'ETF_PROFILE', 'symbol': symbol, 'apikey': apikey}
+
+    async with httpx.AsyncClient() as client:
+        r = await client.get('https://www.alphavantage.co/query', params=params)
+        r.raise_for_status()
+        data: dict[str, str | list[dict[str, str]]] = r.json()
+
+    return data
+
 
 
 
 def get_historical_options(symbol: str, isodate=None, datatype='json', apikey=None) -> dict[str, str | list[dict[str, str]]]:
     """
+    ** INDEPENDENT ENDPOINT **
+
     # https://www.alphavantage.co/documentation/#historical-options
 
     # Any date later than 2008-01-01 is accepted. 
@@ -197,6 +245,8 @@ def get_historical_options(symbol: str, isodate=None, datatype='json', apikey=No
 
 async def async_historical_options(symbol: str, isodate=None, datatype='json', apikey=None) -> dict[str, str | list[dict[str, str]]]:
     """
+    ** INDEPENDENT ENDPOINT **
+
     # https://www.alphavantage.co/documentation/#historical-options
 
     # Any date later than 2008-01-01 is accepted.
@@ -234,8 +284,20 @@ async def async_historical_options(symbol: str, isodate=None, datatype='json', a
 
 
 
+
+
+
+
+
+
+
+
+
+
 def get_listing_status(isodate=None, state='active', apikey=None) -> pd.DataFrame:
     """
+    ** INDEPENDENT ENDPOINT **
+
     # https://www.alphavantage.co/documentation/#listing-status
 
     # To ensure optimal API response time, this endpoint uses the CSV format which is more memory-efficient than JSON.
@@ -271,7 +333,8 @@ def get_listing_status(isodate=None, state='active', apikey=None) -> pd.DataFram
 
 async def async_listing_status(isodate=None, state='active', apikey=None) -> pd.DataFrame:
     """
-    
+    ** INDEPENDENT ENDPOINT **
+
     # To ensure optimal API response time, this endpoint uses the CSV format which is more memory-efficient than JSON.
 
     # By default, state=active and the API will return a list of actively traded stocks and ETFs. Set state=delisted to query a list of delisted assets.
@@ -305,11 +368,38 @@ async def async_listing_status(isodate=None, state='active', apikey=None) -> pd.
 
 
 
+def get_option_chain(symbol: str, isodate=None) -> list[dict[str, str]] | None:
+    """
+    DEPENDS: get_historical_options 
+    """
+    data: dict[str, str | list[dict[str, str]]] = get_historical_options(symbol=symbol, isodate=isodate)
+    
+    option_chain: list[dict[str, str]] | None = data.get('data')
+
+    return option_chain
+
+
+async def async_option_chain(symbol: str, isodate=None) -> list[dict[str, str]] | None:
+    """
+    DEPENDS: async_historical_options 
+    """
+
+    data: dict[str, str | list[dict[str, str]]] = await async_historical_options(symbol=symbol, isodate=isodate)
+    
+    option_chain: list[dict[str, str]] | None = data.get('data')
+
+    return option_chain
+
+
+
+
 
 
 
 def get_overview(symbol: str, apikey=None) -> dict[str, str]:
-
+    """
+    ** INDEPENDENT ENDPOINT **
+    """
     if apikey is None:
         apikey = os.getenv('AV_API_KEY')
         
@@ -326,6 +416,9 @@ def get_overview(symbol: str, apikey=None) -> dict[str, str]:
 
 
 async def async_overview(symbol: str, apikey=None) -> dict[str, str]:
+    """
+    ** INDEPENDENT ENDPOINT **
+    """
     if apikey is None:
         apikey = os.getenv("AV_API_KEY")
 
@@ -343,7 +436,9 @@ async def async_overview(symbol: str, apikey=None) -> dict[str, str]:
 
 
 def get_symbol_search(keywords: str, datatype='json', apikey=None) -> dict[str, list[dict[str, str]]]:
-
+    """
+    ** INDEPENDENT ENDPOINT **
+    """
     if apikey is None:
         apikey = os.getenv('AV_API_KEY')
         
@@ -368,7 +463,9 @@ def get_symbol_search(keywords: str, datatype='json', apikey=None) -> dict[str, 
 
 
 def get_time_series_daily(symbol: str, outputsize='compact', datatype='json', apikey=None) -> dict[str, dict[str, str] | dict[str, dict[str, str]]]:
-
+    """
+    ** INDEPENDENT ENDPOINT **
+    """
     if apikey is None:
         apikey = os.getenv('AV_API_KEY')
         
@@ -390,7 +487,9 @@ def get_time_series_daily(symbol: str, outputsize='compact', datatype='json', ap
 
 
 async def async_time_series_daily(symbol: str, outputsize='compact', datatype='json', apikey=None) -> dict[str, dict[str, str] | dict[str, dict[str, str]]]:
-
+    """
+    ** INDEPENDENT ENDPOINT **
+    """
     if apikey is None:
         apikey = os.getenv('AV_API_KEY')
         
@@ -415,7 +514,7 @@ async def async_time_series_daily(symbol: str, outputsize='compact', datatype='j
 async def main() -> None:
     x1, x2 = await asyncio.gather(
         async_listing_status(),
-        async_cap('SPY'),
+        async_option_chain('SPY'),
     )
 
     print(x1, x2)
@@ -425,6 +524,7 @@ if __name__ == '__main__':
     
     asyncio.run(main())
     
-    #print(get_cap('NVDA'))
+    #x = len(get_option_chain('SPY', isodate='2025-12-12'))
     
+    #print(x)
     
