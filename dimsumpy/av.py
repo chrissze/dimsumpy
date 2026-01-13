@@ -785,7 +785,7 @@ async def main() -> None:
 
 if __name__ == '__main__':
     
-    #asyncio.run(main())
+    asyncio.run(main())
     
-    x = get_shares('AMD')
-    pprint(x, sort_dicts=False)
+    #x = get_shares('AMD')
+    #pprint(x, sort_dicts=False)
