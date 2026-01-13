@@ -727,6 +727,14 @@ async def async_time_series_daily(symbol: str, outputsize='compact', datatype='j
 def get_time_series_daily_adjusted(symbol: str, outputsize='compact', datatype='json', apikey=None) -> dict[str, dict[str, str] | dict[str, dict[str, str]]]:
     """
     ** INDEPENDENT ENDPOINT **
+    
+    {
+    'Meta Data': {}, 
+    'Time Series (Daily)': {}
+    
+    }
+    
+    
     """
     if apikey is None:
         apikey = os.getenv('AV_API_KEY')
@@ -772,11 +780,67 @@ async def async_time_series_daily_adjusted(symbol: str, outputsize='compact', da
 
 
 
+
+
+
+def get_closes(symbol: str) -> dict[str, float]:
+                                   
+    data: dict[str, dict[str, str] | dict[str, dict[str, str]]] = get_time_series_daily_adjusted(symbol, outputsize='full')
+
+    price_dict: dict[str, dict[str, str]] = data.get('Time Series (Daily)')
+    
+    close_dict = {}
+    
+    for k, v in price_dict.items():
+        close_dict[k] = float(v.get('4. close'))
+    
+    
+    return close_dict
+
+
+
+def get_closes_and_caps(symbol: str) -> Any:
+    """
+    
+    x = get_closes_and_caps('AMD')
+    data = list(x.values())
+    pprint(data[:140], sort_dicts=False)
+    
+    """
+    close_dict: dict[str, float] = get_closes(symbol)
+
+    share_dict: dict[str, float] = get_shares(symbol)
+
+    print(close_dict)
+    print(share_dict)
+    
+    cap_dict = {}
+    
+    for k, v in close_dict.items():
+        share_list = [ c for d, c in share_dict.items() if d <= k ]  # share_list will be empty if k (isodate) is too old
+        
+        target_share: float | None = share_list[0] if share_list else None
+        
+        if target_share:   # filter out dates that do not have outstanding share number
+                        
+            data = {}
+            
+            data['symbol'] = symbol
+            data['isodate'] = date.fromisoformat(k)
+            data['close'] = v
+            data['shares'] = target_share
+            data['cap'] = target_share * v
+            cap_dict[k] = data
+            
+    return cap_dict
+        
+
+
 async def main() -> None:
     
     x1, x2 = await asyncio.gather(
         async_listing_status(),
-        async_shares_outstanding('SPY'),
+        async_shares_outstanding('AMD'),
     )
 
     
@@ -785,7 +849,10 @@ async def main() -> None:
 
 if __name__ == '__main__':
     
-    asyncio.run(main())
+    #asyncio.run(main())
     
-    #x = get_shares('AMD')
-    #pprint(x, sort_dicts=False)
+    # x = get_closes_and_caps('AMD')
+    # data = list(x.values())
+    # pprint(data[:540], sort_dicts=False)
+    
+    print(get_shares('AMD'))
