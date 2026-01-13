@@ -42,6 +42,73 @@ import requests
 
 
 
+def get_shares(symbol: str) -> dict[str, float]:
+    
+    data: dict[str, str | list[dict[str, str]]] = get_balance_sheet(symbol)
+    
+    reports: list[dict[str, str]] | None = data.get('quarterlyReports')
+    
+    share_dict = {}
+    
+    for x in reports:
+        isodate = x['fiscalDateEnding']
+        share_dict[isodate] = float(x['commonStockSharesOutstanding'])
+    
+    return share_dict
+
+
+
+def get_balance_sheet(symbol: str, apikey=None) -> dict[str, str | list[dict[str, str]]]:
+    """
+    ** INDEPENDENT ENDPOINT **
+    
+    {
+    'symbol':'AMD',
+    'annualReports':[
+        {
+        'fiscalDateEnding': '2024-12-31',
+        'commonStockSharesOutstanding': '1637000000'
+        }
+        ],
+    'quarterlyReports':[{
+        'fiscalDateEnding': '2025-09-30',
+        'commonStockSharesOutstanding': '1641000000'
+        }]    
+    }
+    
+    """
+    if apikey is None:
+        apikey = os.getenv('AV_API_KEY')
+        
+    params: dict[str, str] = {'function': 'BALANCE_SHEET', 'symbol': symbol, 'apikey': apikey}
+    
+    r: Response = httpx.get('https://www.alphavantage.co/query', params=params)
+    
+    r.raise_for_status()
+    
+    data: dict[str, str | list[dict[str, str]]] = r.json()
+    
+    return data
+
+
+
+async def async_balance_sheet(symbol: str, apikey=None) -> dict[str, str | list[dict[str, str]]]:
+    """
+    ** INDEPENDENT ENDPOINT **
+    """
+    if apikey is None:
+        apikey = os.getenv("AV_API_KEY")
+
+    params: dict[str, str] = {'function': 'BALANCE_SHEET', 'symbol': symbol, 'apikey': apikey}
+
+    async with httpx.AsyncClient() as client:
+        r = await client.get('https://www.alphavantage.co/query', params=params)
+        r.raise_for_status()
+        data: dict[str, str | list[dict[str, str]]] = r.json()
+
+    return data
+
+
 
 def get_cap(symbol: str) -> float | None:
     """
@@ -280,6 +347,47 @@ async def async_historical_options(symbol: str, isodate=None, datatype='json', a
 
 
 
+def get_income_statement(symbol: str, apikey=None) -> dict[str, str | list[dict[str, str]]]:
+    """
+    ** INDEPENDENT ENDPOINT **
+    
+    {
+    'symbol':'AMD',
+    'annualReports':[{}],
+    'quarterlyReports':[{}]    
+    }
+    
+    """
+    if apikey is None:
+        apikey = os.getenv('AV_API_KEY')
+        
+    params: dict[str, str] = {'function': 'INCOME_STATEMENT', 'symbol': symbol, 'apikey': apikey}
+    
+    r: Response = httpx.get('https://www.alphavantage.co/query', params=params)
+    
+    r.raise_for_status()
+    
+    data: dict[str, str | list[dict[str, str]]] = r.json()
+    
+    return data
+
+
+
+async def async_income_statement(symbol: str, apikey=None) -> dict[str, str | list[dict[str, str]]]:
+    """
+    ** INDEPENDENT ENDPOINT **
+    """
+    if apikey is None:
+        apikey = os.getenv("AV_API_KEY")
+
+    params: dict[str, str] = {'function': 'INCOME_STATEMENT', 'symbol': symbol, 'apikey': apikey}
+
+    async with httpx.AsyncClient() as client:
+        r = await client.get('https://www.alphavantage.co/query', params=params)
+        r.raise_for_status()
+        data: dict[str, str | list[dict[str, str]]] = r.json()
+
+    return data
 
 
 
@@ -677,7 +785,7 @@ async def main() -> None:
 
 if __name__ == '__main__':
     
-    asyncio.run(main())
+    #asyncio.run(main())
     
-    #x = get_shares_outstanding('AMD')
-    
+    x = get_shares('AMD')
+    pprint(x, sort_dicts=False)
