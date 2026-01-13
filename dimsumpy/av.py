@@ -37,7 +37,7 @@ from httpx import Response
 
 import pandas as pd
 
-
+import requests
 
 
 
@@ -430,6 +430,67 @@ async def async_overview(symbol: str, apikey=None) -> dict[str, str]:
 
 
 
+def get_shares_outstanding(symbol: str, datatype='json', apikey=None) -> dict[str, str | list[dict[str, str]]]:
+    """
+    ** INDEPENDENT ENDPOINT **
+    
+    data is not up to date, about 12-month old.
+    
+    {    
+    'symbol': 'NVDA',
+    'status': 'success',
+    'data': [{'date': '2025-04-27', 'shares_outstanding_basic': '24441000000', 'shares_outstanding_diluted': '24611000000'}, ...]
+    }
+    """
+    if apikey is None:
+        apikey = os.getenv('AV_API_KEY')
+        
+    params: dict[str, str] = {
+        'function': 'SHARES_OUTSTANDING',     # Required 
+        'symbol': symbol,                     # Required
+        'datatype': datatype,                 # Optional
+        'apikey': apikey                      # Required
+        }
+    
+    
+    r: Response = httpx.get('https://www.alphavantage.co/query', params=params)
+    r.raise_for_status()
+    data: dict[str, str | list[dict[str, str]]] = r.json()    
+    return data
+
+
+
+
+async def async_shares_outstanding(symbol: str, datatype='json', apikey=None) -> dict[str, str | list[dict[str, str]]]:
+    """
+    ** INDEPENDENT ENDPOINT **
+    
+    data is not up to date, about 12-month old.
+    
+    {    
+    'symbol': 'NVDA',
+    'status': 'success',
+    'data': [{'date': '2025-04-27', 'shares_outstanding_basic': '24441000000', 'shares_outstanding_diluted': '24611000000'}, ...]
+    }
+    """
+    if apikey is None:
+        apikey = os.getenv('AV_API_KEY')
+        
+    params: dict[str, str] = {
+        'function': 'SHARES_OUTSTANDING',     # Required 
+        'symbol': symbol,                     # Required
+        'datatype': datatype,                 # Optional
+        'apikey': apikey                      # Required
+        }
+    
+    async with httpx.AsyncClient() as client:
+        r: Response = await client.get('https://www.alphavantage.co/query', params=params)
+        r.raise_for_status()
+        data: dict[str, str | list[dict[str, str]]] = r.json()    
+    
+    return data
+
+
 
 
 def get_symbol_search(keywords: str, datatype='json', apikey=None) -> dict[str, list[dict[str, str]]]:
@@ -554,23 +615,69 @@ async def async_time_series_daily(symbol: str, outputsize='compact', datatype='j
 
 
 
-async def main() -> None:
-    td, p = await async_td_close('TSM')
-    print(td, p)
-    
-    # x1, x2 = await asyncio.gather(
-    #     async_listing_status(),
-    #     async_option_chain('SPY'),
-    # )
 
-    # print(x1, x2)
+def get_time_series_daily_adjusted(symbol: str, outputsize='compact', datatype='json', apikey=None) -> dict[str, dict[str, str] | dict[str, dict[str, str]]]:
+    """
+    ** INDEPENDENT ENDPOINT **
+    """
+    if apikey is None:
+        apikey = os.getenv('AV_API_KEY')
+        
+    params: dict[str, str] = {
+        'function': 'TIME_SERIES_DAILY_ADJUSTED', 
+        'symbol': symbol,            # Required
+        'outputsize': outputsize,    # Optional
+        'datatype': datatype,        # Optional
+        'apikey': apikey,            # Required
+        }
+    
+    r: Response = httpx.get('https://www.alphavantage.co/query', params=params)
+    
+    data: dict[str, dict[str, str] | dict[str, dict[str, str]]] = r.json()
+    
+    return data
+
+
+
+async def async_time_series_daily_adjusted(symbol: str, outputsize='compact', datatype='json', apikey=None) -> dict[str, dict[str, str] | dict[str, dict[str, str]]]:
+    """
+    ** INDEPENDENT ENDPOINT **
+    """
+    if apikey is None:
+        apikey = os.getenv('AV_API_KEY')
+        
+    params: dict[str, str] = {
+        'function': 'TIME_SERIES_DAILY_ADJUSTED', 
+        'symbol': symbol,           # Required
+        'outputsize': outputsize,   # Optional
+        'datatype': datatype,       # Optional
+        'apikey': apikey,           # Required
+        }
+    
+    async with httpx.AsyncClient() as client:
+        r: Response = await client.get('https://www.alphavantage.co/query', params=params)
+        r.raise_for_status()
+        data: dict[str, dict[str, str] | dict[str, dict[str, str]]] = r.json()
+    
+    return data
+
+
+
+
+async def main() -> None:
+    
+    x1, x2 = await asyncio.gather(
+        async_listing_status(),
+        async_shares_outstanding('SPY'),
+    )
+
+    
+    pprint(x2)
 
 
 if __name__ == '__main__':
     
     asyncio.run(main())
     
-    #td, p = get_td_close('AMD')
-    
-    #print(type(td), p)
+    #x = get_shares_outstanding('AMD')
     
