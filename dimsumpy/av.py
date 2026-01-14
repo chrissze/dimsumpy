@@ -783,23 +783,29 @@ async def async_time_series_daily_adjusted(symbol: str, outputsize='compact', da
 
 
 
-def get_closes(symbol: str) -> dict[str, float]:
+def get_prices(symbol: str) -> dict[str, dict[str, str | float | date | None]]:
                                    
     data: dict[str, dict[str, str] | dict[str, dict[str, str]]] = get_time_series_daily_adjusted(symbol, outputsize='full')
 
-    price_dict: dict[str, dict[str, str]] = data.get('Time Series (Daily)')
+    daily_dict: dict[str, dict[str, str]] = data.get('Time Series (Daily)')
     
-    close_dict = {}
+    final_dict: dict[str, dict[str, str | float | date | None]] = {}
     
-    for k, v in price_dict.items():
-        close_dict[k] = float(v.get('4. close'))
+    # k is an isodate string like '2022-01-22'
+    for k_isodate, v in daily_dict.items():
+        price_dict = {}
+        
+        price_dict['symbol'] = symbol
+        price_dict['td'] = date.fromisoformat(k_isodate)
+        price_dict['close'] = float(v.get('4. close'))
+        price_dict['adjclose'] = float(v.get('5. adjusted close'))
+        final_dict[k_isodate] = price_dict 
     
-    
-    return close_dict
+    return final_dict
 
 
 
-def get_closes_and_caps(symbol: str) -> Any:
+def get_caps_shares(symbol: str) -> dict[str, dict[str, str | float | date | None]]:
     """
     
     x = get_closes_and_caps('AMD')
@@ -807,30 +813,23 @@ def get_closes_and_caps(symbol: str) -> Any:
     pprint(data[:140], sort_dicts=False)
     
     """
-    close_dict: dict[str, float] = get_closes(symbol)
+    price_dict: dict[str, dict[str, str | float | date | None]] = get_prices(symbol)
 
     share_dict: dict[str, float] = get_shares(symbol)
-
-    print(close_dict)
-    print(share_dict)
     
     cap_dict = {}
     
-    for k, v in close_dict.items():
-        share_list = [ c for d, c in share_dict.items() if d <= k ]  # share_list will be empty if k (isodate) is too old
+    for isodate, value_dict in price_dict.items():
+        share_list = [ shares for qdate, shares in share_dict.items() if qdate <= isodate ]  # share_list will be empty if k (isodate) is too old
         
-        target_share: float | None = share_list[0] if share_list else None
+        target_shares: float | None = share_list[0] if share_list else None
         
-        if target_share:   # filter out dates that do not have outstanding share number
-                        
-            data = {}
-            
-            data['symbol'] = symbol
-            data['isodate'] = date.fromisoformat(k)
-            data['close'] = v
-            data['shares'] = target_share
-            data['cap'] = target_share * v
-            cap_dict[k] = data
+        close: float | None = value_dict.get('close')
+        
+        if target_shares and close:   # filter out dates that do not have outstanding share number
+            value_dict['shares'] = target_shares
+            value_dict['cap'] = target_shares * close 
+            cap_dict[isodate] = value_dict
             
     return cap_dict
         
@@ -854,5 +853,7 @@ if __name__ == '__main__':
     # x = get_closes_and_caps('AMD')
     # data = list(x.values())
     # pprint(data[:540], sort_dicts=False)
-    
-    print(get_shares('AMD'))
+                       
+    cap_dict: dict[str, dict[str, str | float | date | None]] = get_caps_shares('AMD')
+
+    print(cap_dict)
