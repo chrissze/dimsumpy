@@ -42,19 +42,15 @@ import requests
 
 
 
-def get_shares(symbol: str) -> dict[str, float]:
-    
-    data: dict[str, str | list[dict[str, str]]] = get_balance_sheet(symbol)
-    
-    reports: list[dict[str, str]] | None = data.get('quarterlyReports')
-    
-    share_dict = {}
-    
-    for x in reports:
-        isodate = x['fiscalDateEnding']
-        share_dict[isodate] = float(x['commonStockSharesOutstanding'])
-    
-    return share_dict
+
+
+
+#######################
+###    ENDPOINTS    ###
+#######################
+
+
+
 
 
 
@@ -110,129 +106,6 @@ async def async_balance_sheet(symbol: str, apikey=None) -> dict[str, str | list[
 
 
 
-def get_cap(symbol: str) -> float | None:
-    """
-    DEPENDS: get_overview. get_etf_aum
-    """
-    data: dict[str, str] = get_overview(symbol)   # ETF result will be an empty dict {}
-
-    cap_str: str | None = data.get('MarketCapitalization')
-
-    if cap_str is not None:
-        return float(cap_str)
-    else:
-        return get_etf_aum(symbol)         
-
-
-async def async_cap(symbol: str) -> float | None:
-    """
-    DEPENDS: async_overview. async_etf_aum
-    """
-    data: dict[str, str] = await async_overview(symbol)   # ETF result will be an empty dict {}
-
-    cap_str: str | None = data.get('MarketCapitalization')
-
-    if cap_str is not None:
-        return float(cap_str)
-    else:
-        aum: float | None = await async_etf_aum(symbol)         
-        return aum
-
-
-
-
-def get_close(symbol: str) -> float | None:
-    """
-    DEPENDS: get_time_series_daily
-    """
-    data: dict[str, dict[str, str] | dict[str, dict[str, str]]] = get_time_series_daily(symbol)
-
-    ohlcv_dict: dict[str, dict[str, str]] = data.get('Time Series (Daily)')
-
-    previous_day_quote: dict[str, str] = next(iter(ohlcv_dict.values())) if ohlcv_dict else {}
-    
-    close_str: str | None = previous_day_quote.get('4. close')
-    
-    close: float | None = float(close_str) if close_str else None
-    
-    return close 
-
-
-
-
-async def async_close(symbol: str) -> float | None:
-    """
-    DEPENDS: async_time_series_daily
-    """
-    data: dict[str, dict[str, str] | dict[str, dict[str, str]]] = await async_time_series_daily(symbol)
-
-    ohlcv_dict: dict[str, dict[str, str]] = data.get('Time Series (Daily)')
-
-    previous_day_quote: dict[str, str] = next(iter(ohlcv_dict.values())) if ohlcv_dict else {}
-    
-    close_str: str | None = previous_day_quote.get('4. close')
-    
-    close: float | None = float(close_str) if close_str else None
-    
-    return close 
-
-
-
-
-
-
-
-def get_etf_aum(symbol: str) -> float | None:
-    """
-    DEPENDS: get_etf_profile
-    """
-    data: dict[str, str | list[dict[str, str]]] = get_etf_profile(symbol)
-
-    aum_str: str | None = data.get('net_assets')
-
-    aum: float | None = float(aum_str) if aum_str else None
-
-    return aum
-
-
-
-async def async_etf_aum(symbol: str) -> float | None:
-    """
-    DEPENDS: async_etf_profile
-    """
-    data: dict[str, str | list[dict[str, str]]] = await async_etf_profile(symbol)
-
-    aum_str: str | None = data.get('net_assets')
-
-    aum: float | None = float(aum_str) if aum_str else None
-
-    return aum
-
-
-
-
-def get_etf_list() -> list[str]:
-    """
-    DEPENDS: get_listing_status
-    """
-    df: pd.DataFrame = get_listing_status()
-    etf_symbols: pd.Series = df.loc[df['assetType'].eq('ETF'), 'symbol']
-    etf_list: list[str] = etf_symbols.tolist()
-    return etf_list
-
-
-
-async def async_etf_list() -> list[str]:
-    """
-    DEPENDS: async_listing_status
-    """
-    df: pd.DataFrame = await async_listing_status()
-    etf_symbols: pd.Series = df.loc[df['assetType'].eq('ETF'), 'symbol']
-    etf_list: list[str] = etf_symbols.tolist()
-    return etf_list
-    
-
-
 def get_etf_profile(symbol: str, apikey=None) -> dict[str, str | list[dict[str, str]]]:
     """
     ** INDEPENDENT ENDPOINT **
@@ -267,7 +140,6 @@ async def async_etf_profile(symbol: str, apikey=None) -> dict[str, str | list[di
         data: dict[str, str | list[dict[str, str]]] = r.json()
 
     return data
-
 
 
 
@@ -471,36 +343,6 @@ async def async_listing_status(isodate=None, state='active', apikey=None) -> pd.
 
 
 
-
-
-def get_option_chain(symbol: str, isodate=None) -> list[dict[str, str]] | None:
-    """
-    DEPENDS: get_historical_options 
-    """
-    data: dict[str, str | list[dict[str, str]]] = get_historical_options(symbol=symbol, isodate=isodate)
-    
-    option_chain: list[dict[str, str]] | None = data.get('data')
-
-    return option_chain
-
-
-async def async_option_chain(symbol: str, isodate=None) -> list[dict[str, str]] | None:
-    """
-    DEPENDS: async_historical_options 
-    """
-
-    data: dict[str, str | list[dict[str, str]]] = await async_historical_options(symbol=symbol, isodate=isodate)
-    
-    option_chain: list[dict[str, str]] | None = data.get('data')
-
-    return option_chain
-
-
-
-
-
-
-
 def get_overview(symbol: str, apikey=None) -> dict[str, str]:
     """
     ** INDEPENDENT ENDPOINT **
@@ -625,55 +467,6 @@ def get_symbol_search(keywords: str, datatype='json', apikey=None) -> dict[str, 
 
 
 
-
-
-def get_td_close(symbol: str) -> tuple[date | None, float | None]:
-    """
-    DEPENDS: get_time_series_daily
-    """
-    data: dict[str, dict[str, str] | dict[str, dict[str, str]]] = get_time_series_daily(symbol)
-
-    ohlcv_dict: dict[str, dict[str, str]] = data.get('Time Series (Daily)')
-
-    trading_day_str: str | None = next(iter(ohlcv_dict.keys())) if ohlcv_dict else None
-    
-    td: date | None = date.fromisoformat(trading_day_str) if trading_day_str else None
-    
-    previous_day_quote: dict[str, str] = next(iter(ohlcv_dict.values())) if ohlcv_dict else {}
-    
-    close_str: str | None = previous_day_quote.get('4. close')
-    
-    close: float | None = float(close_str) if close_str else None
-    
-    return td, close 
-
-
-
-
-async def async_td_close(symbol: str) -> tuple[date | None, float | None]:
-    """
-    DEPENDS: async_time_series_daily
-    """
-    data: dict[str, dict[str, str] | dict[str, dict[str, str]]] = await async_time_series_daily(symbol)
-
-    ohlcv_dict: dict[str, dict[str, str]] = data.get('Time Series (Daily)')
-
-    trading_day_str: str | None = next(iter(ohlcv_dict.keys())) if ohlcv_dict else None
-    
-    td: date | None = date.fromisoformat(trading_day_str) if trading_day_str else None
-    
-    previous_day_quote: dict[str, str] = next(iter(ohlcv_dict.values())) if ohlcv_dict else {}
-    
-    close_str: str | None = previous_day_quote.get('4. close')
-    
-    close: float | None = float(close_str) if close_str else None
-    
-    return td, close 
-
-
-
-
-
 def get_time_series_daily(symbol: str, outputsize='compact', datatype='json', apikey=None) -> dict[str, dict[str, str] | dict[str, dict[str, str]]]:
     """
     ** INDEPENDENT ENDPOINT **
@@ -782,9 +575,222 @@ async def async_time_series_daily_adjusted(symbol: str, outputsize='compact', da
 
 
 
+### END OF ENDPOINTS ###
 
-def get_prices(symbol: str) -> dict[str, dict[str, str | float | date | None]]:
-                                   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#######################
+### STOCK FUNCTIONS ###
+#######################
+
+
+def get_cap(symbol: str) -> float | None:
+    """
+    DEPENDS: get_overview. get_etf_aum
+    """
+    data: dict[str, str] = get_overview(symbol)   # ETF result will be an empty dict {}
+
+    cap_str: str | None = data.get('MarketCapitalization')
+
+    if cap_str is not None:
+        return float(cap_str)
+    else:
+        return get_etf_aum(symbol)         
+
+
+async def async_cap(symbol: str) -> float | None:
+    """
+    DEPENDS: async_overview. async_etf_aum
+    """
+    data: dict[str, str] = await async_overview(symbol)   # ETF result will be an empty dict {}
+
+    cap_str: str | None = data.get('MarketCapitalization')
+
+    if cap_str is not None:
+        return float(cap_str)
+    else:
+        aum: float | None = await async_etf_aum(symbol)         
+        return aum
+
+
+
+def get_cap_dict(symbol: str) -> dict[str, dict[str, str | float | date | None]]:
+    """
+    DEPENDS: get_price_dict, get_share_dict
+        
+    x = get_cap_dict('AMD')
+    data = list(x.values())
+    pprint(data[:140], sort_dicts=False)
+    
+    """
+    price_dict: dict[str, dict[str, str | float | date | None]] = get_price_dict(symbol)
+
+    share_dict: dict[str, float] = get_share_dict(symbol)
+    
+    cap_dict = {}
+    
+    for isodate, value_dict in price_dict.items():
+        share_list = [ shares for qdate, shares in share_dict.items() if qdate <= isodate ]  # share_list will be empty if k (isodate) is too old
+        
+        target_shares: float | None = share_list[0] if share_list else None
+        
+        close: float | None = value_dict.get('close')
+        
+        if target_shares and close:   # filter out dates that do not have outstanding share number
+            value_dict['shares'] = target_shares
+            value_dict['cap'] = target_shares * close 
+            cap_dict[isodate] = value_dict
+            
+    return cap_dict
+        
+
+
+def get_close(symbol: str) -> float | None:
+    """
+    DEPENDS: get_time_series_daily
+    """
+    data: dict[str, dict[str, str] | dict[str, dict[str, str]]] = get_time_series_daily(symbol)
+
+    ohlcv_dict: dict[str, dict[str, str]] = data.get('Time Series (Daily)')
+
+    previous_day_quote: dict[str, str] = next(iter(ohlcv_dict.values())) if ohlcv_dict else {}
+    
+    close_str: str | None = previous_day_quote.get('4. close')
+    
+    close: float | None = float(close_str) if close_str else None
+    
+    return close 
+
+
+
+
+async def async_close(symbol: str) -> float | None:
+    """
+    DEPENDS: async_time_series_daily
+    """
+    data: dict[str, dict[str, str] | dict[str, dict[str, str]]] = await async_time_series_daily(symbol)
+
+    ohlcv_dict: dict[str, dict[str, str]] = data.get('Time Series (Daily)')
+
+    previous_day_quote: dict[str, str] = next(iter(ohlcv_dict.values())) if ohlcv_dict else {}
+    
+    close_str: str | None = previous_day_quote.get('4. close')
+    
+    close: float | None = float(close_str) if close_str else None
+    
+    return close 
+
+
+
+
+
+
+
+def get_etf_aum(symbol: str) -> float | None:
+    """
+    DEPENDS: get_etf_profile
+    """
+    data: dict[str, str | list[dict[str, str]]] = get_etf_profile(symbol)
+
+    aum_str: str | None = data.get('net_assets')
+
+    aum: float | None = float(aum_str) if aum_str else None
+
+    return aum
+
+
+
+async def async_etf_aum(symbol: str) -> float | None:
+    """
+    DEPENDS: async_etf_profile
+    """
+    data: dict[str, str | list[dict[str, str]]] = await async_etf_profile(symbol)
+
+    aum_str: str | None = data.get('net_assets')
+
+    aum: float | None = float(aum_str) if aum_str else None
+
+    return aum
+
+
+
+
+def get_etf_list() -> list[str]:
+    """
+    DEPENDS: get_listing_status
+    """
+    df: pd.DataFrame = get_listing_status()
+    etf_symbols: pd.Series = df.loc[df['assetType'].eq('ETF'), 'symbol']
+    etf_list: list[str] = etf_symbols.tolist()
+    return etf_list
+
+
+
+async def async_etf_list() -> list[str]:
+    """
+    DEPENDS: async_listing_status
+    """
+    df: pd.DataFrame = await async_listing_status()
+    etf_symbols: pd.Series = df.loc[df['assetType'].eq('ETF'), 'symbol']
+    etf_list: list[str] = etf_symbols.tolist()
+    return etf_list
+    
+
+
+
+
+
+def get_option_chain(symbol: str, isodate=None) -> list[dict[str, str]] | None:
+    """
+    DEPENDS: get_historical_options 
+    """
+    data: dict[str, str | list[dict[str, str]]] = get_historical_options(symbol=symbol, isodate=isodate)
+    
+    option_chain: list[dict[str, str]] | None = data.get('data')
+
+    return option_chain
+
+
+async def async_option_chain(symbol: str, isodate=None) -> list[dict[str, str]] | None:
+    """
+    DEPENDS: async_historical_options 
+    """
+
+    data: dict[str, str | list[dict[str, str]]] = await async_historical_options(symbol=symbol, isodate=isodate)
+    
+    option_chain: list[dict[str, str]] | None = data.get('data')
+
+    return option_chain
+
+
+
+
+
+def get_price_dict(symbol: str) -> dict[str, dict[str, str | float | date | None]]:
+    """                               
+    DEPENDS: get_time_series_daily_adjusted
+ 
+    USED BY: get_cap_dict
+    """                               
     data: dict[str, dict[str, str] | dict[str, dict[str, str]]] = get_time_series_daily_adjusted(symbol, outputsize='full')
 
     daily_dict: dict[str, dict[str, str]] = data.get('Time Series (Daily)')
@@ -805,34 +811,98 @@ def get_prices(symbol: str) -> dict[str, dict[str, str | float | date | None]]:
 
 
 
-def get_caps_shares(symbol: str) -> dict[str, dict[str, str | float | date | None]]:
+def get_share_dict(symbol: str) -> dict[str, float]:
     """
-    
-    x = get_closes_and_caps('AMD')
-    data = list(x.values())
-    pprint(data[:140], sort_dicts=False)
-    
+    DEPENDS: get_balance_sheet
+ 
+    USED BY: get_cap_dict
     """
-    price_dict: dict[str, dict[str, str | float | date | None]] = get_prices(symbol)
+    data: dict[str, str | list[dict[str, str]]] = get_balance_sheet(symbol)
+    
+    reports: list[dict[str, str]] | None = data.get('quarterlyReports')
+    
+    share_dict = {}
+    
+    for x in reports:
+        isodate = x['fiscalDateEnding']
+        share_dict[isodate] = float(x['commonStockSharesOutstanding'])
+    
+    return share_dict
 
-    share_dict: dict[str, float] = get_shares(symbol)
+
+
+
+
+
+
+def get_td_close(symbol: str) -> tuple[date | None, float | None]:
+    """
+    DEPENDS: get_time_series_daily
+    """
+    data: dict[str, dict[str, str] | dict[str, dict[str, str]]] = get_time_series_daily(symbol)
+
+    ohlcv_dict: dict[str, dict[str, str]] = data.get('Time Series (Daily)')
+
+    trading_day_str: str | None = next(iter(ohlcv_dict.keys())) if ohlcv_dict else None
     
-    cap_dict = {}
+    td: date | None = date.fromisoformat(trading_day_str) if trading_day_str else None
     
-    for isodate, value_dict in price_dict.items():
-        share_list = [ shares for qdate, shares in share_dict.items() if qdate <= isodate ]  # share_list will be empty if k (isodate) is too old
-        
-        target_shares: float | None = share_list[0] if share_list else None
-        
-        close: float | None = value_dict.get('close')
-        
-        if target_shares and close:   # filter out dates that do not have outstanding share number
-            value_dict['shares'] = target_shares
-            value_dict['cap'] = target_shares * close 
-            cap_dict[isodate] = value_dict
-            
-    return cap_dict
-        
+    previous_day_quote: dict[str, str] = next(iter(ohlcv_dict.values())) if ohlcv_dict else {}
+    
+    close_str: str | None = previous_day_quote.get('4. close')
+    
+    close: float | None = float(close_str) if close_str else None
+    
+    return td, close 
+
+
+
+
+async def async_td_close(symbol: str) -> tuple[date | None, float | None]:
+    """
+    DEPENDS: async_time_series_daily
+    """
+    data: dict[str, dict[str, str] | dict[str, dict[str, str]]] = await async_time_series_daily(symbol)
+
+    ohlcv_dict: dict[str, dict[str, str]] = data.get('Time Series (Daily)')
+
+    trading_day_str: str | None = next(iter(ohlcv_dict.keys())) if ohlcv_dict else None
+    
+    td: date | None = date.fromisoformat(trading_day_str) if trading_day_str else None
+    
+    previous_day_quote: dict[str, str] = next(iter(ohlcv_dict.values())) if ohlcv_dict else {}
+    
+    close_str: str | None = previous_day_quote.get('4. close')
+    
+    close: float | None = float(close_str) if close_str else None
+    
+    return td, close 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### END OF STOCK FUNCTIONS ###
+
+
+
+
+
+
+
+
+
 
 
 async def main() -> None:
@@ -854,6 +924,6 @@ if __name__ == '__main__':
     # data = list(x.values())
     # pprint(data[:540], sort_dicts=False)
                        
-    cap_dict: dict[str, dict[str, str | float | date | None]] = get_caps_shares('AMD')
+    cap_dict: dict[str, dict[str, str | float | date | None]] = get_cap_dict('AMD')
 
     print(cap_dict)
