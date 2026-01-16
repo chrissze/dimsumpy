@@ -39,7 +39,9 @@ import pandas as pd
 
 import requests
 
+# CUSTOM LIB
 
+from batterypy.read import readf
 
 
 
@@ -824,8 +826,13 @@ def get_share_dict(symbol: str) -> dict[str, float]:
     share_dict = {}
     
     for x in reports:
-        isodate = x['fiscalDateEnding']
-        share_dict[isodate] = float(x['commonStockSharesOutstanding'])
+        isodate: str | None = x.get('fiscalDateEnding')
+
+        # commonStockSharesOutstanding of META may have a str value 'None'
+        shares: float | None =  readf(x.get('commonStockSharesOutstanding'))
+
+        if isodate and shares:
+            share_dict[isodate] = shares
     
     return share_dict
 
@@ -923,7 +930,7 @@ if __name__ == '__main__':
     # x = get_closes_and_caps('AMD')
     # data = list(x.values())
     # pprint(data[:540], sort_dicts=False)
-                       
-    cap_dict: dict[str, dict[str, str | float | date | None]] = get_cap_dict('AMD')
+    s = input('WHICH SYMBOL DO YOU WANT TO CHECK? ')
+    d: dict[str, dict[str, str | float | date | None]] = get_share_dict(s)
 
-    print(cap_dict)
+    pprint(d)
