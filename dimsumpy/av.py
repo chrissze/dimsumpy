@@ -348,6 +348,8 @@ async def async_listing_status(isodate=None, state='active', apikey=None) -> pd.
 def get_overview(symbol: str, apikey=None) -> dict[str, str]:
     """
     ** INDEPENDENT ENDPOINT **
+    
+    USED BY: get_cap
     """
     if apikey is None:
         apikey = os.getenv('AV_API_KEY')
@@ -367,6 +369,9 @@ def get_overview(symbol: str, apikey=None) -> dict[str, str]:
 async def async_overview(symbol: str, apikey=None) -> dict[str, str]:
     """
     ** INDEPENDENT ENDPOINT **
+    
+    USED BY: async_cap
+    
     """
     if apikey is None:
         apikey = os.getenv("AV_API_KEY")
@@ -393,6 +398,8 @@ def get_shares_outstanding(symbol: str, datatype='json', apikey=None) -> dict[st
     'status': 'success',
     'data': [{'date': '2025-04-27', 'shares_outstanding_basic': '24441000000', 'shares_outstanding_diluted': '24611000000'}, ...]
     }
+    
+    
     """
     if apikey is None:
         apikey = os.getenv('AV_API_KEY')
@@ -607,6 +614,32 @@ async def async_time_series_daily_adjusted(symbol: str, outputsize='compact', da
 
 def get_cap(symbol: str) -> float | None:
     """
+    DEPENDS: get_overview
+    
+    get_cap will return None for ETF
+    """
+    data: dict[str, str] = get_overview(symbol)   # ETF result will be an empty dict {}
+
+    cap_str: str | None = data.get('MarketCapitalization')
+
+    return readf(cap_str)    
+
+
+
+async def async_cap(symbol: str) -> float | None:
+    """
+    DEPENDS: async_overview. async_etf_aum
+    """
+    data: dict[str, str] = await async_overview(symbol)   # ETF result will be an empty dict {}
+
+    cap_str: str | None = data.get('MarketCapitalization')
+
+    return readf(cap_str)
+
+
+
+def get_cap_aum(symbol: str) -> float | None:
+    """
     DEPENDS: get_overview. get_etf_aum
     """
     data: dict[str, str] = get_overview(symbol)   # ETF result will be an empty dict {}
@@ -618,20 +651,6 @@ def get_cap(symbol: str) -> float | None:
     else:
         return get_etf_aum(symbol)         
 
-
-async def async_cap(symbol: str) -> float | None:
-    """
-    DEPENDS: async_overview. async_etf_aum
-    """
-    data: dict[str, str] = await async_overview(symbol)   # ETF result will be an empty dict {}
-
-    cap_str: str | None = data.get('MarketCapitalization')
-
-    if cap_str is not None:
-        return float(cap_str)
-    else:
-        aum: float | None = await async_etf_aum(symbol)         
-        return aum
 
 
 
@@ -931,6 +950,6 @@ if __name__ == '__main__':
     # data = list(x.values())
     # pprint(data[:540], sort_dicts=False)
     s = input('WHICH SYMBOL DO YOU WANT TO CHECK? ')
-    d: dict[str, dict[str, str | float | date | None]] = get_share_dict(s)
+    d: dict[str, dict[str, str | float | date | None]] = get_overview(s)
 
     pprint(d)
