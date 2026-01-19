@@ -1,7 +1,39 @@
 
 import pytest
 
-from dimsumpy.av import get_cap, async_cap, get_close, async_close, get_etf_aum, async_etf_aum, get_etf_list, async_etf_list
+from dimsumpy.av import  get_balance_sheet, async_balance_sheet
+
+from dimsumpy.av import  get_balance_sheet, get_cap, async_cap, get_cap_aum, get_close, async_close, get_etf_aum, async_etf_aum, get_etf_list, async_etf_list
+
+
+######################
+### TEST ENDPOINTS ###
+######################
+
+
+def test_get_balance_sheet() -> None:
+    
+    data: dict[str, str | list[dict[str, str]]] = get_balance_sheet('AMD')
+    s = data.get('symbol')
+    
+    assert isinstance(s, str)
+    assert s == 'AMD'
+    
+
+@pytest.mark.asyncio
+async def test_async_balance_sheet() -> None:
+    
+    data: dict[str, str | list[dict[str, str]]] = await async_balance_sheet('AMD')
+    s = data.get('symbol')
+    
+    assert isinstance(s, str)
+    assert s == 'AMD'
+    
+
+
+############################
+### TEST STOCK FUNCTIONS ###
+############################
 
 
 def test_get_cap() -> None:
@@ -11,8 +43,8 @@ def test_get_cap() -> None:
     
     assert isinstance(c1, float)
     assert c1 > 100_000_000_000.0
-    assert isinstance(c2, float)
-    assert c2 > 100_000_000_000.0
+    
+    assert c2 is None
     assert c3 is None
     
 
@@ -24,10 +56,26 @@ async def test_async_cap():
     
     assert isinstance(c1, float)
     assert c1 > 4_000_000_000_000.0
+
+    assert c2 is None
+    assert c3 is None
+
+
+
+def test_get_cap_aum() -> None:
+    c1 = get_cap_aum('AMD')
+    c2 = get_cap_aum('QQQ')
+    c3 = get_cap('XXXXXX')
+    
+    assert isinstance(c1, float)
+    assert c1 > 100_000_000_000.0
+    
     assert isinstance(c2, float)
     assert c2 > 100_000_000_000.0
-    assert c3 is None
     
+    assert c3 is None
+
+
 
 def test_get_close() -> None:
     c1 = get_close('AMD')
