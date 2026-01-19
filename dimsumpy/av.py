@@ -145,7 +145,7 @@ async def async_etf_profile(symbol: str, apikey=None) -> dict[str, str | list[di
 
 
 
-def get_historical_options(symbol: str, td=None, datatype='json', apikey=None) -> dict[str, str | list[dict[str, str]]]:
+def get_historical_options(symbol: str, td: str | date | None = None, datatype='json', apikey=None) -> dict[str, str | list[dict[str, str]]]:
     """
     ** INDEPENDENT ENDPOINT **
 
@@ -163,14 +163,10 @@ def get_historical_options(symbol: str, td=None, datatype='json', apikey=None) -
         'apikey': apikey,
         }
     
-    if isinstance(td, str):
-        params['date'] = td 
     
-    elif isinstance(td, datetime): 
-        params['date'] = td.date().isoformat()
+    if td is not None:    # when td is not None 
+        params['date'] = td.isoformat() if isinstance(td, date) else td 
     
-    elif isinstance(td, date):
-        params['date'] = td.isoformat() 
     
     r: Response = httpx.get('https://www.alphavantage.co/query', params=params)
     r.raise_for_status()
@@ -181,7 +177,7 @@ def get_historical_options(symbol: str, td=None, datatype='json', apikey=None) -
 
 
 
-async def async_historical_options(symbol: str, td=None, datatype='json', apikey=None) -> dict[str, str | list[dict[str, str]]]:
+async def async_historical_options(symbol: str, td: str | date | None = None, datatype='json', apikey=None) -> dict[str, str | list[dict[str, str]]]:
     """
     ** INDEPENDENT ENDPOINT **
 
@@ -201,14 +197,9 @@ async def async_historical_options(symbol: str, td=None, datatype='json', apikey
         'apikey': apikey,
         }
     
-    if isinstance(td, str):
-        params['date'] = td 
+    if td is not None: 
+        params['date'] = td.isoformat() if isinstance(td, date) else td 
     
-    elif isinstance(td, datetime): 
-        params['date'] = td.date().isoformat()
-    
-    elif isinstance(td, date):
-        params['date'] = td.isoformat() 
     
     async with httpx.AsyncClient() as client:
         r: Response = await client.get('https://www.alphavantage.co/query', params=params)
@@ -273,7 +264,7 @@ async def async_income_statement(symbol: str, apikey=None) -> dict[str, str | li
 
 
 
-def get_listing_status(td=None, state='active', apikey=None) -> pd.DataFrame:
+def get_listing_status(td: str | date | None = None, state='active', apikey=None) -> pd.DataFrame:
     """
     ** INDEPENDENT ENDPOINT **
 
@@ -294,12 +285,9 @@ def get_listing_status(td=None, state='active', apikey=None) -> pd.DataFrame:
         'apikey': apikey
         }
     
-    if isinstance(td, str):
-        params['date'] = td 
-    elif isinstance(td, datetime): 
-        params['date'] = td.date().isoformat()
-    elif isinstance(td, date):
-        params['date'] = td.isoformat() 
+    if td is not None:
+        params['date'] = td.isoformat() if isinstance(td, date) else td 
+    
     
     r: Response = httpx.get('https://www.alphavantage.co/query', params=params)
     
@@ -310,7 +298,7 @@ def get_listing_status(td=None, state='active', apikey=None) -> pd.DataFrame:
     return df
 
 
-async def async_listing_status(td=None, state='active', apikey=None) -> pd.DataFrame:
+async def async_listing_status(td: str | date | None = None, state='active', apikey=None) -> pd.DataFrame:
     """
     ** INDEPENDENT ENDPOINT **
 
@@ -329,12 +317,10 @@ async def async_listing_status(td=None, state='active', apikey=None) -> pd.DataF
         'apikey': apikey
         }
     
-    if isinstance(td, str):
-        params['date'] = td 
-    elif isinstance(td, datetime): 
-        params['date'] = td.date().isoformat()
-    elif isinstance(td, date):
-        params['date'] = td.isoformat() 
+    
+    if td is not None:
+        params['date'] = td.isoformat() if isinstance(td, date) else td 
+    
     
     async with httpx.AsyncClient() as client:
         r: Response = await client.get('https://www.alphavantage.co/query', params=params)
@@ -850,7 +836,7 @@ def get_share_dict(symbol: str) -> dict[str, float]:
         # commonStockSharesOutstanding of META may have a str value 'None'
         shares: float | None =  readf(x.get('commonStockSharesOutstanding'))
 
-        if td and shares:
+        if td is not None and shares is not None:
             share_dict[td] = shares
     
     return share_dict
@@ -952,6 +938,6 @@ if __name__ == '__main__':
 
     s = input('WHICH SYMBOL DO YOU WANT TO CHECK? ')
 
-    d: dict[str, str | list[dict]] = get_cap_dict(s)
+    d: dict[str, str | list[dict]] = get_(s)
 
     pprint(d)

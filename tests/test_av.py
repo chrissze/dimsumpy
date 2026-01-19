@@ -61,9 +61,28 @@ def test_get_historical_options() -> None:
     
     endpoint: str = data['endpoint']
     
-    symbol: str = data['data']
+    symbol: str = data['data'][0]['symbol']
     
+    assert isinstance(endpoint, str)
+    assert endpoint == 'Historical Options'
     
+    assert isinstance(symbol, str)
+    assert symbol == 'AMD'
+    
+@pytest.mark.asyncio
+async def test_async_historical_options() -> None:
+
+    data: dict[str, str | list[dict[str, str]]] = await async_historical_options('AMD')
+    
+    endpoint: str = data['endpoint']
+    
+    symbol: str = data['data'][0]['symbol']
+    
+    assert isinstance(endpoint, str)
+    assert endpoint == 'Historical Options'
+    
+    assert isinstance(symbol, str)
+    assert symbol == 'AMD'
     
     
 ############################
