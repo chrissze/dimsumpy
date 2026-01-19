@@ -40,11 +40,14 @@ def test_get_etf_profile() -> None:
     assert isinstance(aum, str)
     assert float(aum) > 100_000_000_000
     
+    
 
 
 @pytest.mark.asyncio
 async def test_async_etf_profile() -> None:
+    """
     
+    """
     data: dict[str, str | list[dict[str, str]]] = await async_etf_profile('QQQ')
     aum = data.get('net_assets')
     
