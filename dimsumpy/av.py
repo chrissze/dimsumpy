@@ -145,7 +145,7 @@ async def async_etf_profile(symbol: str, apikey=None) -> dict[str, str | list[di
 
 
 
-def get_historical_options(symbol: str, isodate=None, datatype='json', apikey=None) -> dict[str, str | list[dict[str, str]]]:
+def get_historical_options(symbol: str, td=None, datatype='json', apikey=None) -> dict[str, str | list[dict[str, str]]]:
     """
     ** INDEPENDENT ENDPOINT **
 
@@ -163,14 +163,14 @@ def get_historical_options(symbol: str, isodate=None, datatype='json', apikey=No
         'apikey': apikey,
         }
     
-    if isinstance(isodate, str):
-        params['date'] = isodate 
+    if isinstance(td, str):
+        params['date'] = td 
     
-    elif isinstance(isodate, datetime): 
-        params['date'] = isodate.date().isoformat()
+    elif isinstance(td, datetime): 
+        params['date'] = td.date().isoformat()
     
-    elif isinstance(isodate, date):
-        params['date'] = isodate.isoformat() 
+    elif isinstance(td, date):
+        params['date'] = td.isoformat() 
     
     r: Response = httpx.get('https://www.alphavantage.co/query', params=params)
     r.raise_for_status()
@@ -181,7 +181,7 @@ def get_historical_options(symbol: str, isodate=None, datatype='json', apikey=No
 
 
 
-async def async_historical_options(symbol: str, isodate=None, datatype='json', apikey=None) -> dict[str, str | list[dict[str, str]]]:
+async def async_historical_options(symbol: str, td=None, datatype='json', apikey=None) -> dict[str, str | list[dict[str, str]]]:
     """
     ** INDEPENDENT ENDPOINT **
 
@@ -201,14 +201,14 @@ async def async_historical_options(symbol: str, isodate=None, datatype='json', a
         'apikey': apikey,
         }
     
-    if isinstance(isodate, str):
-        params['date'] = isodate 
+    if isinstance(td, str):
+        params['date'] = td 
     
-    elif isinstance(isodate, datetime): 
-        params['date'] = isodate.date().isoformat()
+    elif isinstance(td, datetime): 
+        params['date'] = td.date().isoformat()
     
-    elif isinstance(isodate, date):
-        params['date'] = isodate.isoformat() 
+    elif isinstance(td, date):
+        params['date'] = td.isoformat() 
     
     async with httpx.AsyncClient() as client:
         r: Response = await client.get('https://www.alphavantage.co/query', params=params)
@@ -273,7 +273,7 @@ async def async_income_statement(symbol: str, apikey=None) -> dict[str, str | li
 
 
 
-def get_listing_status(isodate=None, state='active', apikey=None) -> pd.DataFrame:
+def get_listing_status(td=None, state='active', apikey=None) -> pd.DataFrame:
     """
     ** INDEPENDENT ENDPOINT **
 
@@ -294,12 +294,12 @@ def get_listing_status(isodate=None, state='active', apikey=None) -> pd.DataFram
         'apikey': apikey
         }
     
-    if isinstance(isodate, str):
-        params['date'] = isodate 
-    elif isinstance(isodate, datetime): 
-        params['date'] = isodate.date().isoformat()
-    elif isinstance(isodate, date):
-        params['date'] = isodate.isoformat() 
+    if isinstance(td, str):
+        params['date'] = td 
+    elif isinstance(td, datetime): 
+        params['date'] = td.date().isoformat()
+    elif isinstance(td, date):
+        params['date'] = td.isoformat() 
     
     r: Response = httpx.get('https://www.alphavantage.co/query', params=params)
     
@@ -310,7 +310,7 @@ def get_listing_status(isodate=None, state='active', apikey=None) -> pd.DataFram
     return df
 
 
-async def async_listing_status(isodate=None, state='active', apikey=None) -> pd.DataFrame:
+async def async_listing_status(td=None, state='active', apikey=None) -> pd.DataFrame:
     """
     ** INDEPENDENT ENDPOINT **
 
@@ -329,12 +329,12 @@ async def async_listing_status(isodate=None, state='active', apikey=None) -> pd.
         'apikey': apikey
         }
     
-    if isinstance(isodate, str):
-        params['date'] = isodate 
-    elif isinstance(isodate, datetime): 
-        params['date'] = isodate.date().isoformat()
-    elif isinstance(isodate, date):
-        params['date'] = isodate.isoformat() 
+    if isinstance(td, str):
+        params['date'] = td 
+    elif isinstance(td, datetime): 
+        params['date'] = td.date().isoformat()
+    elif isinstance(td, date):
+        params['date'] = td.isoformat() 
     
     async with httpx.AsyncClient() as client:
         r: Response = await client.get('https://www.alphavantage.co/query', params=params)
@@ -669,8 +669,8 @@ def get_cap_dict(symbol: str) -> dict[str, dict[str, str | float | date | None]]
     
     cap_dict = {}
     
-    for isodate, value_dict in price_dict.items():
-        share_list = [ shares for qdate, shares in share_dict.items() if qdate <= isodate ]  # share_list will be empty if k (isodate) is too old
+    for td, value_dict in price_dict.items():
+        share_list = [ shares for qdate, shares in share_dict.items() if qdate <= td ]  # share_list will be empty if k (td) is too old
         
         target_shares: float | None = share_list[0] if share_list else None
         
@@ -679,7 +679,7 @@ def get_cap_dict(symbol: str) -> dict[str, dict[str, str | float | date | None]]
         if target_shares and close:   # filter out dates that do not have outstanding share number
             value_dict['shares'] = target_shares
             value_dict['cap'] = target_shares * close 
-            cap_dict[isodate] = value_dict
+            cap_dict[td] = value_dict
             
     return cap_dict
         
@@ -780,23 +780,23 @@ async def async_etf_list() -> list[str]:
 
 
 
-def get_option_chain(symbol: str, isodate=None) -> list[dict[str, str]] | None:
+def get_option_chain(symbol: str, td=None) -> list[dict[str, str]] | None:
     """
     DEPENDS: get_historical_options 
     """
-    data: dict[str, str | list[dict[str, str]]] = get_historical_options(symbol=symbol, isodate=isodate)
+    data: dict[str, str | list[dict[str, str]]] = get_historical_options(symbol=symbol, td=td)
     
     option_chain: list[dict[str, str]] | None = data.get('data')
 
     return option_chain
 
 
-async def async_option_chain(symbol: str, isodate=None) -> list[dict[str, str]] | None:
+async def async_option_chain(symbol: str, td=None) -> list[dict[str, str]] | None:
     """
     DEPENDS: async_historical_options 
     """
 
-    data: dict[str, str | list[dict[str, str]]] = await async_historical_options(symbol=symbol, isodate=isodate)
+    data: dict[str, str | list[dict[str, str]]] = await async_historical_options(symbol=symbol, td=td)
     
     option_chain: list[dict[str, str]] | None = data.get('data')
 
@@ -818,15 +818,15 @@ def get_price_dict(symbol: str) -> dict[str, dict[str, str | float | date | None
     
     final_dict: dict[str, dict[str, str | float | date | None]] = {}
     
-    # k is an isodate string like '2022-01-22'
-    for k_isodate, v in daily_dict.items():
+    # k is an td string like '2022-01-22'
+    for k_td, v in daily_dict.items():
         price_dict = {}
         
         price_dict['symbol'] = symbol
-        price_dict['td'] = date.fromisoformat(k_isodate)
+        price_dict['td'] = date.fromisoformat(k_td)
         price_dict['close'] = float(v.get('4. close'))
         price_dict['adjclose'] = float(v.get('5. adjusted close'))
-        final_dict[k_isodate] = price_dict 
+        final_dict[k_td] = price_dict 
     
     return final_dict
 
@@ -845,13 +845,13 @@ def get_share_dict(symbol: str) -> dict[str, float]:
     share_dict = {}
     
     for x in reports:
-        isodate: str | None = x.get('fiscalDateEnding')
+        td: str | None = x.get('fiscalDateEnding')
 
         # commonStockSharesOutstanding of META may have a str value 'None'
         shares: float | None =  readf(x.get('commonStockSharesOutstanding'))
 
-        if isodate and shares:
-            share_dict[isodate] = shares
+        if td and shares:
+            share_dict[td] = shares
     
     return share_dict
 
@@ -949,7 +949,9 @@ if __name__ == '__main__':
     # x = get_closes_and_caps('AMD')
     # data = list(x.values())
     # pprint(data[:540], sort_dicts=False)
+
     s = input('WHICH SYMBOL DO YOU WANT TO CHECK? ')
-    d: dict[str, dict[str, str | float | date | None]] = get_etf_profile(s)
+
+    d: dict[str, str | list[dict]] = get_cap_dict(s)
 
     pprint(d)

@@ -1,7 +1,7 @@
 
 import pytest
 
-from dimsumpy.av import  get_balance_sheet, async_balance_sheet, get_etf_profile, async_etf_profile
+from dimsumpy.av import  get_balance_sheet, async_balance_sheet, get_etf_profile, async_etf_profile, get_historical_options, async_historical_options
 
 from dimsumpy.av import  get_balance_sheet, get_cap, async_cap, get_cap_aum, get_close, async_close, get_etf_aum, async_etf_aum, get_etf_list, async_etf_list
 
@@ -55,7 +55,13 @@ async def test_async_etf_profile() -> None:
     assert float(aum) > 100_000_000_000
     
     
+def test_get_historical_options() -> None:
+
+    data: dict[str, str | list[dict[str, str]]] = get_historical_options('AMD')
     
+    endpoint: str = data['endpoint']
+    
+    symbol: str = data['data']
     
     
     
