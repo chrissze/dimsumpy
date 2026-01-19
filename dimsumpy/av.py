@@ -950,6 +950,6 @@ if __name__ == '__main__':
     # data = list(x.values())
     # pprint(data[:540], sort_dicts=False)
     s = input('WHICH SYMBOL DO YOU WANT TO CHECK? ')
-    d: dict[str, dict[str, str | float | date | None]] = get_overview(s)
+    d: dict[str, dict[str, str | float | date | None]] = get_etf_profile(s)
 
     pprint(d)

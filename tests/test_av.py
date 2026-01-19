@@ -1,7 +1,7 @@
 
 import pytest
 
-from dimsumpy.av import  get_balance_sheet, async_balance_sheet
+from dimsumpy.av import  get_balance_sheet, async_balance_sheet, get_etf_profile, async_etf_profile
 
 from dimsumpy.av import  get_balance_sheet, get_cap, async_cap, get_cap_aum, get_close, async_close, get_etf_aum, async_etf_aum, get_etf_list, async_etf_list
 
@@ -31,6 +31,32 @@ async def test_async_balance_sheet() -> None:
     
 
 
+
+def test_get_etf_profile() -> None:
+    
+    data: dict[str, str | list[dict[str, str]]] = get_etf_profile('QQQ')
+    aum = data.get('net_assets')
+    
+    assert isinstance(aum, str)
+    assert float(aum) > 100_000_000_000
+    
+
+
+@pytest.mark.asyncio
+async def test_async_etf_profile() -> None:
+    
+    data: dict[str, str | list[dict[str, str]]] = await async_etf_profile('QQQ')
+    aum = data.get('net_assets')
+    
+    assert isinstance(aum, str)
+    assert float(aum) > 100_000_000_000
+    
+    
+    
+    
+    
+    
+    
 ############################
 ### TEST STOCK FUNCTIONS ###
 ############################
