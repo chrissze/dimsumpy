@@ -74,6 +74,8 @@ def get_balance_sheet(symbol: str, apikey=None) -> dict[str, str | list[dict[str
         }]    
     }
     
+    Invalid symbol result: {}   (empty dict)
+       
     """
     if apikey is None:
         apikey = os.getenv('AV_API_KEY')
@@ -93,6 +95,9 @@ def get_balance_sheet(symbol: str, apikey=None) -> dict[str, str | list[dict[str
 async def async_balance_sheet(symbol: str, apikey=None) -> dict[str, str | list[dict[str, str]]]:
     """
     ** INDEPENDENT ENDPOINT **
+    
+    Invalid symbol result: {}   (empty dict)
+       
     """
     if apikey is None:
         apikey = os.getenv("AV_API_KEY")
@@ -938,6 +943,6 @@ if __name__ == '__main__':
 
     s = input('WHICH SYMBOL DO YOU WANT TO CHECK? ')
 
-    d: dict[str, str | list[dict]] = get_(s)
+    d: dict[str, str | list[dict]] = get_balance_sheet(s, apikey='de')
 
     pprint(d)

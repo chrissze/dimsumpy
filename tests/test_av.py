@@ -13,13 +13,19 @@ from dimsumpy.av import  get_balance_sheet, get_cap, async_cap, get_cap_aum, get
 
 def test_get_balance_sheet() -> None:
     
-    data: dict[str, str | list[dict[str, str]]] = get_balance_sheet('AMD')
-    s = data.get('symbol')
+    amd_data: dict[str, str | list[dict[str, str]]] = get_balance_sheet('AMD')
+    s = amd_data.get('symbol')
     
     assert isinstance(s, str)
     assert s == 'AMD'
     
-
+    xxx_data: dict[str, str | list[dict[str, str]]] = get_balance_sheet(symbol='XXX', apikey=None)
+    
+    assert isinstance(xxx_data, dict)
+    assert xxx_data == {}
+    
+    
+    
 @pytest.mark.asyncio
 async def test_async_balance_sheet() -> None:
     
@@ -28,6 +34,11 @@ async def test_async_balance_sheet() -> None:
     
     assert isinstance(s, str)
     assert s == 'AMD'
+    
+    xxx_data: dict[str, str | list[dict[str, str]]] = await async_balance_sheet(symbol='XXX', apikey=None)
+    
+    assert isinstance(xxx_data, dict)
+    assert xxx_data == {}
     
 
 
