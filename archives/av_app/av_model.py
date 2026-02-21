@@ -1,6 +1,39 @@
 
 
 
+#########################
+### GENERAL FUNCTIONS ###
+#########################
+
+
+
+
+async def get_cap_aum(symbol: str) -> float | None:
+    """
+    DEPENDS: get_cap, get_etf_aum
+    """
+    cap: float | None = await get_cap(symbol)   # ETF result will be an empty dict {}
+
+    if cap is not None:
+        return cap
+    else:
+        aum = await get_etf_aum(symbol)         
+        return aum
+
+
+
+async def get_etf_list() -> list[str]:
+    """
+    DEPENDS: get_listing_status
+    """
+    df: pd.DataFrame = await get_listing_status()
+    etf_symbols: pd.Series = df.loc[df['assetType'].eq('ETF'), 'symbol']
+    etf_list: list[str] = etf_symbols.tolist()
+    return etf_list
+    
+
+
+
 async def get_close(symbol: str) -> float | None:
     """
     DEPENDS: get_time_series_daily
@@ -39,3 +72,5 @@ async def get_td_close(symbol: str) -> tuple[datetime.date | None, float | None]
     close: float | None = float(close_str) if close_str else None
     
     return td, close 
+
+### END OF GENERAL FUNCTIONS ###
